@@ -3,6 +3,7 @@ module ruoyi-vue-go-zero
 go 1.27.3
 
 require (
+	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/extrame/xls v0.0.1
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -22,7 +23,6 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
-	github.com/alicebob/miniredis/v2 v2.38.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect

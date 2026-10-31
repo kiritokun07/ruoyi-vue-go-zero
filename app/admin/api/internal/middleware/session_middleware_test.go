@@ -3,9 +3,9 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"ruoyi-vue-go-zero/app/admin/api/internal/online"
 	"net/http"
 	"net/http/httptest"
+	"ruoyi-vue-go-zero/app/admin/api/internal/online"
 	"testing"
 	"time"
 
@@ -20,7 +20,7 @@ func TestSession(t *testing.T) {
 	httpx.SetErrorHandlerCtx(apierror.HTTP)
 	cache := redistest.CreateRedis(t)
 	active := true
-	m := NewSessionMiddleware("test-key", cache, func(context.Context, int64) (online.Identity, error) {
+	m := NewSessionMiddleware("test-key", cache, 1800, func(context.Context, int64) (online.Identity, error) {
 		if active {
 			return online.Identity{UserName: "member"}, nil
 		}
@@ -30,6 +30,9 @@ func TestSession(t *testing.T) {
 		c := Claims{UserID: 7, RegisteredClaims: jwt.RegisteredClaims{ID: id, ExpiresAt: jwt.NewNumericDate(expiry)}}
 		raw, err := jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(m.secret)
 		if err != nil {
+			t.Fatal(err)
+		}
+		if err := online.Create(context.Background(), cache, online.Session{UserID: 7, TokenId: id}, 3600); err != nil {
 			t.Fatal(err)
 		}
 		return raw

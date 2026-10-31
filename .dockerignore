@@ -1,0 +1,13 @@
+*
+!LICENSE
+!go.mod
+!go.sum
+!app/
+!app/**
+!deploy/
+!deploy/admin-api.yaml
+!Dockerfile
+**/*_test.go
+**/*.local.yaml
+**/*.local.yml
+**/.DS_Store

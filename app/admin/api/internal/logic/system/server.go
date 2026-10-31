@@ -7,10 +7,10 @@ import (
 	"runtime"
 	"time"
 
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/mem"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 var startedAt = time.Now()

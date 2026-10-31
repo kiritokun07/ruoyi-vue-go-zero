@@ -1,0 +1,81 @@
+name: ruoyi-go
+
+services:
+  api:
+    build:
+      context: .
+      args:
+        GOPROXY: "${GOPROXY:-https://proxy.golang.org,direct}"
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      RUOYI_MYSQL_DSN: "ruoyi:${MYSQL_PASSWORD:?Copy .env.example to .env first}@tcp(mysql:3306)/ry-vue?parseTime=true&loc=Local&charset=utf8mb4"
+      RUOYI_REDIS_PASSWORD: "${RUOYI_REDIS_PASSWORD:-}"
+      RUOYI_JWT_SECRET: "${RUOYI_JWT_SECRET:?Set RUOYI_JWT_SECRET in .env}"
+    ports:
+      - "${RUOYI_BIND_ADDRESS:-127.0.0.1}:${RUOYI_HTTP_PORT:-8888}:8888"
+    volumes:
+      - runtime:/app/var
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8888/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_DATABASE: ry-vue
+      MYSQL_USER: ruoyi
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}"
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/auth_schema.sql:/docker-entrypoint-initdb.d/01-auth-schema.sql:ro
+      - ./sql/dev_seed.sql:/docker-entrypoint-initdb.d/02-auth-seed.sql:ro
+      - ./sql/access_schema.sql:/docker-entrypoint-initdb.d/03-access-schema.sql:ro
+      - ./sql/access_dev_seed.sql:/docker-entrypoint-initdb.d/04-access-seed.sql:ro
+      - ./sql/system_schema.sql:/docker-entrypoint-initdb.d/05-system-schema.sql:ro
+      - ./sql/header_notice.sql:/docker-entrypoint-initdb.d/06-header-notice.sql:ro
+      - ./sql/system_dev_seed.sql:/docker-entrypoint-initdb.d/07-system-seed.sql:ro
+      - ./sql/operations_schema.sql:/docker-entrypoint-initdb.d/08-operations-schema.sql:ro
+      - ./sql/scheduler_schema.sql:/docker-entrypoint-initdb.d/09-scheduler-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h127.0.0.1 -u\"$$MYSQL_USER\" -D\"$$MYSQL_DATABASE\" -e 'SELECT COUNT(*) FROM go_job_trigger' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: "${RUOYI_REDIS_PASSWORD:-}"
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mysql-data:
+  redis-data:
+  runtime:

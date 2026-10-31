@@ -8,10 +8,10 @@ import (
 	"slices"
 	"strings"
 
-	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/xwb1989/sqlparser"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 var tableComment = regexp.MustCompile("(?i)\\bcomment\\s*=?\\s*'([^'\\\\]*)'")

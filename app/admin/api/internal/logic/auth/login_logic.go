@@ -48,7 +48,7 @@ func (l *LoginLogic) Login(req *types.LoginRequest, ip, agent string) (*types.Lo
 	if err == nil {
 		now := time.Now().Unix()
 		id := uuid.NewString()
-		claims := jwt.MapClaims{"userId": userID, "jti": id, "iat": now, "exp": now + l.svcCtx.Config.Auth.AccessExpire}
+		claims := jwt.MapClaims{"userId": userID, "jti": id, "iat": now}
 		token, err = jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(l.svcCtx.Config.Auth.AccessSecret))
 		if err == nil {
 			client.Identity, err = l.svcCtx.Access.ActiveIdentity(l.ctx, userID)
@@ -59,9 +59,10 @@ func (l *LoginLogic) Login(req *types.LoginRequest, ip, agent string) (*types.Lo
 				err = l.svcCtx.Users.RecordLogin(l.ctx, userID, ip)
 			}
 			if err == nil {
+				client.UserID = userID
 				client.TokenId = id
 				client.LoginTime = now * 1000
-				_, err = online.Admit(l.ctx, l.svcCtx.Redis, client, now+l.svcCtx.Config.Auth.AccessExpire)
+				err = online.Create(l.ctx, l.svcCtx.Redis, client, l.svcCtx.Config.Auth.AccessExpire)
 			}
 		}
 	}

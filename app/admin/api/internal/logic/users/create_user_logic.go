@@ -28,5 +28,5 @@ func NewCreateUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Create
 }
 
 func (l *CreateUserLogic) CreateUser(req *types.UserInput) (resp *types.StatusResponse, err error) {
-	return system.Write(l.ctx, l.svcCtx, "system:user:add", req, func(s *system.Session) (*types.StatusResponse, error) { return s.CreateUser(req) })
+	return system.CreateUser(l.ctx, l.svcCtx, req)
 }

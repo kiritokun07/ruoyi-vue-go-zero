@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
 	"ruoyi-vue-go-zero/app/admin/api/internal/types"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 // The fixtures live within one transaction, including when the test fails.

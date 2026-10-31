@@ -3,8 +3,6 @@ Host: 127.0.0.1
 Port: 8888
 Middlewares:
   Log: false
-  MaxBytes: true
-MaxBytes: 8192
 MySQLDSN: "${RUOYI_MYSQL_DSN}"
 Redis:
   Host: "${RUOYI_REDIS_HOST}"

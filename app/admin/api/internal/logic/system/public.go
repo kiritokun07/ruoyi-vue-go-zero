@@ -6,10 +6,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
 	"ruoyi-vue-go-zero/app/admin/api/internal/svc"
 	"ruoyi-vue-go-zero/app/admin/api/internal/types"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 func Register(ctx context.Context, sc *svc.ServiceContext, r *types.LoginRequest) (*types.StatusResponse, error) {
@@ -43,18 +43,16 @@ func Register(ctx context.Context, sc *svc.ServiceContext, r *types.LoginRequest
 	if e != nil {
 		return nil, e
 	}
-	e = sc.DB.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
-		var guard int64
-		if e := tx.QueryRowCtx(ctx, &guard, "SELECT user_id FROM sys_user WHERE user_id=1 FOR UPDATE"); e != nil {
-			return e
-		}
-		s := Session{ctx: ctx, db: tx}
-		if e := s.rejectIf("SELECT COUNT(*) FROM sys_user WHERE user_name=? AND del_flag='0'", "注册账号已存在", r.Username); e != nil {
-			return e
-		}
-		return s.exec("INSERT INTO sys_user(user_name,nick_name,password,create_time,pwd_update_date) VALUES(?,?,?,NOW(),NOW())", r.Username, r.Username, hash)
+	return withUserWrite(ctx, sc, r.Username, func(ctx context.Context) (*types.StatusResponse, error) {
+		e := sc.DB.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+			s := Session{ctx: ctx, db: tx}
+			if e := s.rejectIf("SELECT COUNT(*) FROM sys_user WHERE user_name=? AND del_flag='0'", "注册账号已存在", r.Username); e != nil {
+				return e
+			}
+			return s.exec("INSERT INTO sys_user(user_name,nick_name,password,create_time,pwd_update_date) VALUES(?,?,?,NOW(),NOW())", r.Username, r.Username, hash)
+		})
+		return saved(e)
 	})
-	return saved(e)
 }
 
 func Welcome() *File { return welcome() }

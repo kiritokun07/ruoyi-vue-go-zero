@@ -33,7 +33,7 @@ func (s *catalogService) DeleteBulletin(r *types.RecordIds) (*types.StatusRespon
 	if e != nil {
 		return nil, e
 	}
-	if e = s.BeforeDelete("sys_notice", ids); e != nil {
+	if e = s.Models().DeleteNoticeReaders(s.Context(), ids); e != nil {
 		return nil, e
 	}
 	return system.Saved(s.Models().DeleteBulletin(s.Context(), ids))

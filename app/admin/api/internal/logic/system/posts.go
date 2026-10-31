@@ -10,17 +10,11 @@ import (
 const postColumns = `post_id,post_name,post_code,post_sort,status,IFNULL(remark,'') remark,DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s') create_time`
 
 func (s *Session) ListPost(r *types.ListFilter) (*types.PostList, error) {
-	f := filter{}
-	f.text("post_code", r.PostCode)
-	f.text("post_name", r.PostName)
-	f.equal("status", r.Status)
-	from := " FROM sys_post" + f.where()
-	n, e := one[int64](s, "SELECT COUNT(*)"+from, f.args...)
-	if e != nil {
-		return nil, e
+	rows, n, err := s.models().PostRows(s.ctx, r, true)
+	if err != nil {
+		return nil, err
 	}
-	rows, e := many[types.PostRecord](s, "SELECT "+postColumns+from+" ORDER BY post_sort,post_id"+page(r), f.args...)
-	return &types.PostList{StatusResponse: ok(), Rows: rows, Total: n}, e
+	return &types.PostList{StatusResponse: ok(), Rows: rows, Total: n}, nil
 }
 
 func (s *Session) GetPost(r *types.RecordId) (*types.PostResult, error) {

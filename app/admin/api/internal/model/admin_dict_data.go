@@ -9,15 +9,26 @@ import (
 const DictEntryColumns = `IFNULL(dict_code,0) dict_code,IFNULL(dict_sort,0) dict_sort,IFNULL(dict_label,'') dict_label,IFNULL(dict_value,'') dict_value,IFNULL(dict_type,'') dict_type,IFNULL(css_class,'') css_class,IFNULL(list_class,'') list_class,IFNULL(is_default,'') is_default,IFNULL(status,'') status,IFNULL(create_by,'') create_by,IFNULL(DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s'),'') create_time,IFNULL(update_by,'') update_by,IFNULL(DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s'),'') update_time,IFNULL(remark,'') remark`
 
 func (m *AdminModel) DictEntryRows(ctx context.Context, r *types.AdminFilter, paged bool) ([]types.DictEntryEntry, int64, error) {
+	return m.dictEntryRows(ctx, r, paged, true)
+}
+func (m *AdminModel) DictEntryExportBatch(ctx context.Context, r *types.AdminFilter) ([]types.DictEntryEntry, error) {
+	rows, _, err := m.dictEntryRows(ctx, r, true, false)
+	return rows, err
+}
+func (m *AdminModel) dictEntryRows(ctx context.Context, r *types.AdminFilter, paged, count bool) ([]types.DictEntryEntry, int64, error) {
 	f := filter{}
 	f.equal("dict_type", r.DictType)
 	f.text("dict_label", r.DictLabel)
 	f.equal("status", r.Status)
 	f.dates("create_time", &types.ListFilter{BeginTime: r.BeginTime, EndTime: r.EndTime})
 	from := " FROM sys_dict_data" + f.where()
-	n, err := queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
-	if err != nil {
-		return nil, 0, err
+	var n int64
+	if count {
+		var err error
+		n, err = queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 	order := " ORDER BY dict_code DESC"
 	if paged {

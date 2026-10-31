@@ -45,6 +45,9 @@ func (s *catalogService) EditDictType(r *types.DictTypeEntry) (*types.StatusResp
 		}
 		return nil, apierror.Business("名称或键已存在")
 	}
+	if err := s.Models().RenameDictDataType(s.Context(), r.DictId, r.DictType); err != nil {
+		return nil, err
+	}
 	return system.Saved(s.Models().EditDictType(s.Context(), r, s.Actor()))
 }
 

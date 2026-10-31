@@ -17,6 +17,7 @@ type Identity struct {
 }
 type Session struct {
 	Identity
+	UserID        int64  `json:"userId"`
 	TokenId       string `json:"tokenId"`
 	Ipaddr        string `json:"ipaddr"`
 	LoginLocation string `json:"loginLocation"`
@@ -35,14 +36,21 @@ func Client(ip, agent string) Session {
 	return v
 }
 
-// Admit also backfills active sessions issued before the online directory was introduced.
-func Admit(ctx context.Context, r *redis.Redis, v Session, expires int64) (bool, error) {
-	b, e := json.Marshal(v)
-	if e != nil {
-		return false, e
+// Create is only called after successful authentication. Requests never recreate sessions.
+func Create(ctx context.Context, r *redis.Redis, v Session, ttl int64) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
 	}
-	res, e := r.EvalCtx(ctx, `if redis.call('EXISTS',KEYS[2])==1 then return 0 end;redis.call('SET',KEYS[1],ARGV[1],'EXAT',ARGV[2],'NX');return 1`, []string{Prefix + v.TokenId, "ruoyi-go:revoked:" + v.TokenId}, string(b), expires)
-	return res == int64(1), e
+	return r.SetexCtx(ctx, Prefix+v.TokenId, string(b), int(ttl))
+}
+
+// Touch atomically checks membership and refreshes sessions close to expiry.
+// Refresh and revoke cannot race to resurrect a deleted session.
+func Touch(ctx context.Context, r *redis.Redis, id string, userID, ttl int64) (bool, error) {
+	threshold := min(int64(20*60), ttl)
+	value, err := r.EvalCtx(ctx, `local raw=redis.call('GET',KEYS[1]);if not raw or redis.call('EXISTS',KEYS[2])==1 then return 0 end;local s=cjson.decode(raw);if s.userId~=tonumber(ARGV[1]) then return 0 end;local remaining=redis.call('TTL',KEYS[1]);if remaining<0 then return 0 end;if remaining<=tonumber(ARGV[3]) then redis.call('EXPIRE',KEYS[1],ARGV[2]) end;return 1`, []string{Prefix + id, "ruoyi-go:revoked:" + id}, userID, ttl, threshold)
+	return value == int64(1), err
 }
 
 // Keep the deny-list marker until the original expiry even if less than a second remains.

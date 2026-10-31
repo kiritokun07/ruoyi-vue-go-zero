@@ -1,98 +1,115 @@
 # RuoYi Vue Go Zero
 
-基于 **go-zero** 的若依 Go 后端。
+基于 **go-zero** 的若依后端，沿用原版 [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue) 的接口约定和 MySQL 数据模型，提供登录认证、系统管理、监控、Excel 导入导出与代码生成。
 
 [English](README.md) | 简体中文
 
-沿用 [yangzongzhuan](https://github.com/yangzongzhuan) 的原版项目 [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue) 的接口约定和 MySQL 数据模型，独立实现 Go 后端。管理界面可搭配兼容的 [RuoYi-Vue3 前端](https://github.com/yangzongzhuan/RuoYi-Vue3)。
+**本仓库只包含后端。** 以下部署会启动后端 API、MySQL 和 Redis。需要管理界面时，请单独接入兼容的 [RuoYi-Vue3 前端](https://github.com/yangzongzhuan/RuoYi-Vue3)。
 
-## 功能
+## Docker 安装（推荐）
 
-- 验证码、JWT 认证、角色权限与数据权限。
-- 用户、角色、部门、岗位、菜单、字典、参数和公告管理。
-- 在线会话、审计日志、定时任务、Redis 和主机监控。
-- 文件上传下载、Excel 导入导出、Swagger 接口文档。
-- 基于若依 Java、MyBatis、SQL 和 Vue 模板的代码生成。
+无需在电脑上另外安装 Go、MySQL 或 Redis。
 
-采用单体 REST 服务，依赖 MySQL 和 Redis。定时任务当前支持内置 `ryTask` 示例目标，新增目标需要实现对应 Go 代码。
+### 1. 安装工具
 
-## 快速开始
+- 安装 [Git](https://git-scm.com/downloads)。
+- Windows/macOS：安装并启动 [Docker Desktop](https://docs.docker.com/desktop/)。Windows 使用 Linux 容器模式。
+- Linux 服务器：安装 [Docker Engine](https://docs.docker.com/engine/install/) 和 [Compose 插件](https://docs.docker.com/compose/install/linux/)。
 
-需要 **Go 1.27.3**、MySQL 和 **Redis 6.2+**。MySQL 本地集成验证版本为 9.4.0。核心依赖为 go-zero 1.10.3 和 Excelize v2，完整版本见 [go.mod](go.mod)。
+打开终端，执行 `docker version` 和 `docker compose version`。前者应同时显示客户端和服务端信息；Compose 需要 v2.20 或更新版本。
+
+### 2. 下载项目
 
 ```bash
 git clone https://github.com/kiritokun07/ruoyi-vue-go-zero.git
 cd ruoyi-vue-go-zero
-go mod download
+cp .env.example .env
 ```
 
-在**空的开发数据库**中，按顺序执行以下脚本一次。不要在已有数据库上直接运行整套脚本。
+以上命令也可以在 PowerShell 中执行。后续命令都在这个项目目录执行。AI 子模块是可选开发工具，安装和运行服务不需要下载它们。
+
+### 3. 检查配置
+
+用文本编辑器打开 `.env`。示例值可以直接用于**本机体验**：
+
+| 配置项 | 用途 |
+| --- | --- |
+| `RUOYI_HTTP_PORT` | 后端端口，默认 `8888`；被占用时可改为 `18888` |
+| `RUOYI_BIND_ADDRESS` | 默认 `127.0.0.1`，仅允许本机访问 |
+| `MYSQL_PASSWORD` / `MYSQL_ROOT_PASSWORD` | 数据库普通账号和管理员账号的密码 |
+| `RUOYI_JWT_SECRET` | token 签名密钥，至少 32 个字符；重启时保持不变 |
+| `RUOYI_REDIS_PASSWORD` | 容器内部网络中的 Redis 密码，可留空 |
+
+多人使用或部署到服务器前，请将示例密码和密钥改成随机字母数字串。例如，`openssl rand -hex 32` 可生成一个合适的随机值。不要公开 `.env`，Git 已忽略该文件。
+
+### 4. 启动
 
 ```bash
-mysql -u root -p -e 'CREATE DATABASE `ry-vue` CHARACTER SET utf8mb4'
-
-mysql -u root -p ry-vue < sql/auth_schema.sql
-mysql -u root -p ry-vue < sql/dev_seed.sql
-mysql -u root -p ry-vue < sql/access_schema.sql
-mysql -u root -p ry-vue < sql/access_dev_seed.sql
-mysql -u root -p ry-vue < sql/system_schema.sql
-mysql -u root -p ry-vue < sql/header_notice.sql
-mysql -u root -p ry-vue < sql/system_dev_seed.sql
-mysql -u root -p ry-vue < sql/operations_schema.sql
-mysql -u root -p ry-vue < sql/scheduler_schema.sql
+docker compose up -d --build --wait
 ```
 
-替换示例数据库凭据后启动：
+第一次启动会下载镜像、编译 Go，并自动初始化 `ry-vue` 数据库，可能需要几分钟。MySQL 和 Redis 使用容器内部端口，不占用电脑已有的 3306、6379 端口。
+
+### 5. 确认安装成功
 
 ```bash
-export RUOYI_MYSQL_DSN='dev:password@tcp(127.0.0.1:3306)/ry-vue?parseTime=true&loc=Local'
-export RUOYI_REDIS_HOST='127.0.0.1:6379'
-export RUOYI_REDIS_PASSWORD=''
-export RUOYI_JWT_SECRET="$(openssl rand -hex 32)"
-
-go run ./app/admin/api -f app/admin/api/etc/admin-api.yaml
+docker compose ps
 ```
 
-- 服务地址：`http://127.0.0.1:8888`
-- Swagger：`/swagger-ui/index.html`
-- 开发账号：`admin / admin123`、`ry / admin123`，对外提供服务前请修改密码。
-- 前端代理：将 `/dev-api/*` 转发到后端，并移除 `/dev-api` 前缀。
-- 部署时保持 JWT 密钥稳定，并保留 `var/` 下的运行时文件。
+三个服务 `api`、`mysql`、`redis` 都应显示 **healthy**。在浏览器中打开：
 
-详细配置见[配置文件](app/admin/api/etc/admin-api.yaml)和[配置默认值](app/admin/api/internal/config/config.go)，接口文档通过 Swagger 查看。
+- API 欢迎页：<http://localhost:8888/>
+- Swagger 接口文档：<http://localhost:8888/swagger-ui/index.html>
+- 验证码接口：<http://localhost:8888/captchaImage>
 
-## 开发
+修改过端口时，请替换地址中的 `8888`。验证码接口返回带 Base64 图片的 JSON，看到 JSON 是正常现象。
 
-```text
-app/admin/api/
-├── desc/       # 接口契约
-├── etc/        # 配置
-├── internal/   # Handler, Logic, Model, ServiceContext
-└── admin.go
-scripts/        # 代码生成
-sql/            # 表结构与开发种子数据
-```
+开发账号为 **`admin / admin123`**、**`ry / admin123`**。它们是若依登录账号，与 `.env` 中的数据库密码不同。开放给其他人访问前，请修改这些账号的密码。
 
-[desc/admin.api](app/admin/api/desc/admin.api) 是唯一生成入口。契约及 Handler/Logic 按业务模块分组，Model 负责持久化，ServiceContext 初始化依赖。
+需要管理界面时，单独运行 RuoYi-Vue3 前端，将其 `/dev-api/*` 代理到 `http://127.0.0.1:8888`，并去掉 `/dev-api` 前缀。后端本身不提供登录网页。前端若运行在另一个容器内，应使用可访问的后端地址，不能指向它自己的 `localhost`。
+
+## 常用操作
 
 ```bash
-go install github.com/zeromicro/go-zero/tools/goctl@v1.10.2
-./scripts/generate-api.sh
-go build ./...
-go test ./...
-go vet ./...
+docker compose logs -f --tail=100 api    # 查看后端日志，Ctrl+C 只退出查看
+docker compose logs --tail=100 mysql   # 查看数据库启动、初始化日志
+docker compose restart api            # 重启后端
+docker compose down                   # 停止服务，保留数据
+
+git pull
+docker compose up -d --build --wait    # 更新代码后重新构建并启动
 ```
 
-MySQL 集成测试需连接已初始化的开发数据库：
+数据库、Redis 数据、上传和生成的文件保存在 Docker 数据卷中。**不要执行 `docker compose down -v`，除非确定要删除本次部署的全部数据。** 升级前请备份数据库和文件。初始化 SQL 只会在 MySQL 数据卷为空时执行，后续表结构升级应按版本说明操作。
 
-```bash
-RUOYI_SYSTEM_TEST_DSN="$RUOYI_MYSQL_DSN" go test ./...
-```
+## 常见问题
 
-欢迎提交 Issue 和 Pull Request。请保持若依接口行为兼容、补充相关测试，并同步更新中英文 README。开发指引见 [AGENTS.md](AGENTS.md)，可选 AI 子模块通过 `git submodule update --init --recursive` 获取。
+| 现象 | 处理方法 |
+| --- | --- |
+| 无法连接 Docker | 启动 Docker Desktop 或 Docker 服务后重试 |
+| 提示端口被占用 | 修改 `.env` 中的 `RUOYI_HTTP_PORT`，重新执行启动命令 |
+| 下载镜像或 Go 依赖失败 | 检查网络和 Docker 的代理配置；仅 Go 依赖下载失败时，可在 `.env` 添加 `GOPROXY=https://goproxy.cn,direct` 后重新构建 |
+| MySQL 显示 unhealthy | 执行 `docker compose logs --tail=100 mysql`；首次初始化可能需要几分钟 |
+| 修改 `.env` 后数据库提示密码错误 | 已存在的数据库仍使用旧密码；恢复原配置，或显式修改数据库账号密码 |
+| 能打开 API，却没有管理界面 | 本仓库只部署后端，需要另外接入前端 |
+| 其他电脑无法访问 | 服务器部署时将 `RUOYI_BIND_ADDRESS` 改为 `0.0.0.0`，配置防火墙和 HTTPS 反向代理；先替换示例密码 |
+
+MySQL 和 Redis 默认不开放宿主机端口。查看数据库可执行 `docker compose exec mysql mysql -u ruoyi -p ry-vue`。服务启动顺序的原理见 [Compose 官方说明](https://docs.docker.com/compose/how-tos/startup-order/)。
+
+## 开发与兼容说明
+
+不使用 Docker 的安装方式、SQL 初始化顺序和开发命令，见[源码启动指南](docs/development.zh-CN.md)。
+
+- REST 契约位于 `app/admin/api/desc/`，Handler、Logic 按业务模块分组。
+- Redis 管理会话有效期和续期，并按账号控制注册、新增和导入的并发写入，保持原数据库结构。
+- XLSX 逐行导入、分批导出；导入每条用户记录独立提交，失败时保留成功行，与 Java 一致。支持旧版 XLS 导入。
+- 定时任务通过 `internal/tasks` 显式注册 Go 函数，内置 `ryTask` 示例；自定义 Java 任务需移植为 Go 实现。
+- 代码生成使用若依 Java、MyBatis、SQL、Vue 模板。
+
+欢迎提交 Issue 和 PR。请说明复现步骤和预期的若依行为，补充相关测试，并同步更新中英文说明。反馈中不要包含密码或私有数据。
 
 ## 致谢与许可证
 
-感谢 [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue)、[go-zero](https://github.com/zeromicro/go-zero)、[go-zero-looklook](https://github.com/Mikaelemmmm/go-zero-looklook) 和 [Excelize](https://github.com/qax-os/excelize)。
+基于 [yangzongzhuan](https://github.com/yangzongzhuan) 的原版项目 [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue)。感谢 [go-zero](https://github.com/zeromicro/go-zero)、[go-zero-looklook](https://github.com/Mikaelemmmm/go-zero-looklook) 和 [Excelize](https://github.com/qax-os/excelize)。
 
-本项目采用 [MIT 许可证](LICENSE)，若依代码生成模板保留[上游许可声明](app/admin/api/internal/generator/LICENSE.ruoyi)。
+采用 [MIT 许可证](LICENSE)。代码生成模板保留[上游许可证声明](app/admin/api/internal/generator/LICENSE.ruoyi)。

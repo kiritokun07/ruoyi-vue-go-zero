@@ -37,17 +37,18 @@ func (l *LogoutLogic) Logout(authorization string) (*types.StatusResponse, error
 	if claims == nil {
 		return success, nil
 	}
-	ttl := claims.ExpiresAt.Unix() - time.Now().Unix()
-	if ttl > 0 {
-		v, err := online.Revoke(l.ctx, l.svcCtx.Redis, claims.ID, claims.ExpiresAt.Unix())
+	deadline := int64(0)
+	if claims.ExpiresAt != nil {
+		deadline = claims.ExpiresAt.Unix()
+	}
+	v, err := online.Revoke(l.ctx, l.svcCtx.Redis, claims.ID, deadline)
+	if err != nil {
+		return nil, err
+	}
+	if v != nil {
+		_, err = l.svcCtx.LoginLog.Insert(l.ctx, &model.SysLogininfor{UserName: v.UserName, Ipaddr: v.Ipaddr, LoginLocation: v.LoginLocation, Browser: v.Browser, Os: v.OS, Status: "0", Msg: "退出成功", LoginTime: sql.NullTime{Time: time.Now(), Valid: true}})
 		if err != nil {
-			return nil, err
-		}
-		if v != nil {
-			_, err = l.svcCtx.LoginLog.Insert(l.ctx, &model.SysLogininfor{UserName: v.UserName, Ipaddr: v.Ipaddr, LoginLocation: v.LoginLocation, Browser: v.Browser, Os: v.OS, Status: "0", Msg: "退出成功", LoginTime: sql.NullTime{Time: time.Now(), Valid: true}})
-			if err != nil {
-				l.Error(err)
-			}
+			l.Error(err)
 		}
 	}
 	return success, nil

@@ -28,5 +28,5 @@ func NewNoticeDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 }
 
 func (l *NoticeDetailLogic) NoticeDetail(req *types.RecordId) (resp *types.NoticeDetail, err error) {
-	return system.Read(l.ctx, l.svcCtx, "", func(s *system.Session) (*types.NoticeDetail, error) { return s.NoticeDetail(req) })
+	return system.Read(l.ctx, l.svcCtx, "system:notice:query", func(s *system.Session) (*types.NoticeDetail, error) { return s.NoticeDetail(req) })
 }

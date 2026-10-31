@@ -4,23 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorhill/cronexpr"
-	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
-	"ruoyi-vue-go-zero/app/admin/api/internal/model"
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
+	"ruoyi-vue-go-zero/app/admin/api/internal/model"
+	"ruoyi-vue-go-zero/app/admin/api/internal/tasks"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
-var targetNoArgs = regexp.MustCompile(`^ryTask\.ryNoParams(?:\(\s*\))?$`)
-var targetOne = regexp.MustCompile(`^ryTask\.ryParams\(\s*'([^']*)'\s*\)$`)
-var targetMultiple = regexp.MustCompile(`^ryTask\.ryMultipleParams\(\s*'([^']*)'\s*,\s*(true|false)\s*,\s*(-?\d+)[Ll]\s*,\s*(-?\d+(?:\.\d+)?)[Dd]\s*,\s*(-?\d+)\s*\)$`)
 var weekdayNumber = regexp.MustCompile(`[0-9]+`)
 
 func schedule(expr string) (*cronexpr.Expression, error) {
@@ -60,19 +57,6 @@ func schedule(expr string) (*cronexpr.Expression, error) {
 	return parsed, nil
 }
 
-func jobMessage(target string) (string, error) {
-	if targetNoArgs.MatchString(target) {
-		return "执行无参方法", nil
-	}
-	if v := targetOne.FindStringSubmatch(target); v != nil {
-		return "执行有参方法：" + v[1], nil
-	}
-	if v := targetMultiple.FindStringSubmatch(target); v != nil {
-		return fmt.Sprintf("执行多参方法：字符串 %s，布尔 %s，长整型 %s，浮点型 %s，整形 %s", v[1], v[2], v[3], v[4], v[5]), nil
-	}
-	return "", apierror.Business("任务调用目标未注册")
-}
-
 func (s *Session) ValidateSchedule(r *types.ScheduleEntry, create bool) error {
 	if create {
 		r.Status = "1"
@@ -83,8 +67,8 @@ func (s *Session) ValidateSchedule(r *types.ScheduleEntry, create bool) error {
 	if r.JobName == "" || r.JobGroup == "" || !validStatus(r.Status) || !validStatus(r.Concurrent) {
 		return apierror.Business("任务名称、组、并发或状态无效")
 	}
-	if _, e := jobMessage(r.InvokeTarget); e != nil {
-		return e
+	if e := tasks.Default.Validate(r.InvokeTarget); e != nil {
+		return apierror.Business(e.Error())
 	}
 	expr, e := schedule(r.CronExpression)
 	if e != nil {
@@ -92,9 +76,6 @@ func (s *Session) ValidateSchedule(r *types.ScheduleEntry, create bool) error {
 	}
 	if expr.Next(time.Now()).IsZero() {
 		return apierror.Business("表达式没有未来的执行时间")
-	}
-	if !create {
-		return s.exec("DELETE FROM go_job_trigger WHERE job_id=?", r.JobId)
 	}
 	return nil
 }
@@ -209,7 +190,7 @@ func setNextFire(j *types.ScheduleEntry) {
 }
 
 func recordExecution(ctx context.Context, tx sqlx.Session, j types.ScheduleEntry) error {
-	message, e := jobMessage(j.InvokeTarget)
+	message, e := tasks.Default.Invoke(ctx, j.InvokeTarget)
 	status, detail := "0", ""
 	if e != nil {
 		status, detail = "1", e.Error()

@@ -35,7 +35,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	cache := redis.MustNewRedis(c.Redis)
 	access := model.NewAccessModel(conn)
 	return &ServiceContext{
-		Session:   middleware.NewSessionMiddleware(c.Auth.AccessSecret, cache, access.ActiveIdentity).Handle,
+		Session:   middleware.NewSessionMiddleware(c.Auth.AccessSecret, cache, c.Auth.AccessExpire, access.ActiveIdentity).Handle,
 		Access:    access,
 		Admin:     model.NewAdminModel(conn),
 		DB:        conn,

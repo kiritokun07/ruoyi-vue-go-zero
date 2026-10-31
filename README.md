@@ -1,98 +1,115 @@
 # RuoYi Vue Go Zero
 
-A Go backend for RuoYi, built with **go-zero**.
+A **go-zero** backend implementing the API conventions and MySQL data model of [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue). Includes authentication, system administration, monitoring, Excel import/export and code generation.
 
 English | [简体中文](README.zh-CN.md)
 
-Based on the API conventions and MySQL data model of [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue) by [yangzongzhuan](https://github.com/yangzongzhuan). This is an independent backend implementation; use a compatible [RuoYi-Vue3 frontend](https://github.com/yangzongzhuan/RuoYi-Vue3) for the UI.
+**Backend only.** The deployment below starts the API, MySQL and Redis. To use the administration UI, connect a compatible [RuoYi-Vue3 frontend](https://github.com/yangzongzhuan/RuoYi-Vue3).
 
-## Features
+## Install with Docker (recommended)
 
-- CAPTCHA, JWT authentication, role permissions and data scopes.
-- Users, roles, departments, posts, menus, dictionaries, configuration and notices.
-- Online sessions, audit logs, scheduled jobs, Redis and host monitoring.
-- File uploads/downloads, Excel import/export and Swagger documentation.
-- Code generation using RuoYi Java, MyBatis, SQL and Vue templates.
+No Go, MySQL or Redis installation is needed on your computer.
 
-Runs as a single REST service with MySQL and Redis. Scheduled jobs currently support the built-in `ryTask` sample targets; additional targets require Go implementations.
+### 1. Install the prerequisites
 
-## Quick start
+- Install [Git](https://git-scm.com/downloads).
+- Windows/macOS: install and start [Docker Desktop](https://docs.docker.com/desktop/). On Windows, use Linux containers.
+- Linux server: install [Docker Engine](https://docs.docker.com/engine/install/) and the [Compose plugin](https://docs.docker.com/compose/install/linux/).
 
-Requires **Go 1.27.3**, MySQL and **Redis 6.2+**. Local MySQL integration was verified with 9.4.0. Core dependencies are go-zero 1.10.3 and Excelize v2; see [go.mod](go.mod).
+Run `docker version` and `docker compose version` in a terminal. Both the Docker client and server should be available; use Compose v2.20 or newer.
+
+### 2. Download the project
 
 ```bash
 git clone https://github.com/kiritokun07/ruoyi-vue-go-zero.git
 cd ruoyi-vue-go-zero
-go mod download
+cp .env.example .env
 ```
 
-Initialize an **empty development database**, running these scripts once in order. Do not apply the full sequence to an existing database.
+These commands also work in PowerShell. All following commands run in this project directory. AI submodules are optional and are not needed to build or run the service.
+
+### 3. Check the configuration
+
+Open `.env` in a text editor. The sample values work for a **local trial**:
+
+| Setting | Purpose |
+| --- | --- |
+| `RUOYI_HTTP_PORT` | API port, default `8888`; change to `18888` if occupied |
+| `RUOYI_BIND_ADDRESS` | Default `127.0.0.1`, accessible only from this computer |
+| `MYSQL_PASSWORD` / `MYSQL_ROOT_PASSWORD` | Application and administrator database passwords |
+| `RUOYI_JWT_SECRET` | Token signing secret, at least 32 characters; keep stable across restarts |
+| `RUOYI_REDIS_PASSWORD` | Optional Redis password on the private container network |
+
+Before a shared/server installation, replace the sample passwords and secret with random alphanumeric values. For example, `openssl rand -hex 32` generates a suitable value. Keep `.env` private; Git ignores it.
+
+### 4. Start
 
 ```bash
-mysql -u root -p -e 'CREATE DATABASE `ry-vue` CHARACTER SET utf8mb4'
-
-mysql -u root -p ry-vue < sql/auth_schema.sql
-mysql -u root -p ry-vue < sql/dev_seed.sql
-mysql -u root -p ry-vue < sql/access_schema.sql
-mysql -u root -p ry-vue < sql/access_dev_seed.sql
-mysql -u root -p ry-vue < sql/system_schema.sql
-mysql -u root -p ry-vue < sql/header_notice.sql
-mysql -u root -p ry-vue < sql/system_dev_seed.sql
-mysql -u root -p ry-vue < sql/operations_schema.sql
-mysql -u root -p ry-vue < sql/scheduler_schema.sql
+docker compose up -d --build --wait
 ```
 
-Replace the sample database credentials, then start the service:
+The first start downloads images, compiles Go and initializes the `ry-vue` database automatically. It can take several minutes. MySQL and Redis use private container ports, so they do not conflict with existing services on ports 3306/6379.
+
+### 5. Check the result
 
 ```bash
-export RUOYI_MYSQL_DSN='dev:password@tcp(127.0.0.1:3306)/ry-vue?parseTime=true&loc=Local'
-export RUOYI_REDIS_HOST='127.0.0.1:6379'
-export RUOYI_REDIS_PASSWORD=''
-export RUOYI_JWT_SECRET="$(openssl rand -hex 32)"
-
-go run ./app/admin/api -f app/admin/api/etc/admin-api.yaml
+docker compose ps
 ```
 
-- API: `http://127.0.0.1:8888`
-- Swagger: `/swagger-ui/index.html`
-- Development accounts: `admin / admin123`, `ry / admin123`. Change these passwords before exposing the service.
-- Frontend proxy: forward `/dev-api/*` to the API and strip `/dev-api`.
-- Keep the JWT secret stable across deployments and preserve runtime files under `var/`.
+All three services (`api`, `mysql`, `redis`) should be **healthy**. Open:
 
-See [configuration](app/admin/api/etc/admin-api.yaml) and [configuration defaults](app/admin/api/internal/config/config.go). API documentation is available in Swagger.
+- API welcome page: <http://localhost:8888/>
+- Swagger API documentation: <http://localhost:8888/swagger-ui/index.html>
+- CAPTCHA response: <http://localhost:8888/captchaImage>
 
-## Development
+Use your configured port if you changed it. `/captchaImage` returns JSON with a Base64 image; a JSON response is expected.
 
-```text
-app/admin/api/
-├── desc/       # API contracts
-├── etc/        # Configuration
-├── internal/   # Handler, Logic, Model, ServiceContext
-└── admin.go
-scripts/        # Code generation
-sql/            # Schema and development seeds
-```
+Development accounts are **`admin / admin123`** and **`ry / admin123`**. These are application accounts, separate from the database credentials in `.env`. Change their passwords before allowing other people to access the service.
 
-[desc/admin.api](app/admin/api/desc/admin.api) is the single generation entry point. Contracts and Handler/Logic packages are grouped by business module; Models handle persistence, and ServiceContext initializes dependencies.
+For the UI, run the RuoYi-Vue3 frontend separately and configure its proxy to forward `/dev-api/*` to `http://127.0.0.1:8888`, removing the `/dev-api` prefix. The API itself does not serve a login page. A frontend running inside another container must use a reachable backend address rather than its own `localhost`.
+
+## Everyday commands
 
 ```bash
-go install github.com/zeromicro/go-zero/tools/goctl@v1.10.2
-./scripts/generate-api.sh
-go build ./...
-go test ./...
-go vet ./...
+docker compose logs -f --tail=100 api    # API logs; Ctrl+C only stops viewing
+docker compose logs --tail=100 mysql   # Database startup/initialization logs
+docker compose restart api            # Restart the backend
+docker compose down                   # Stop services; retain data
+
+git pull
+docker compose up -d --build --wait    # Rebuild and start after an update
 ```
 
-For MySQL integration tests, use an initialized development database:
+Named volumes preserve MySQL data, Redis data and uploaded/generated files. **Do not use `docker compose down -v` unless you intend to delete all of this deployment's data.** Back up the database and files before upgrading. Initialization scripts run only on an empty MySQL volume; later schema upgrades must follow the release instructions.
 
-```bash
-RUOYI_SYSTEM_TEST_DSN="$RUOYI_MYSQL_DSN" go test ./...
-```
+## Troubleshooting
 
-Issues and pull requests are welcome. Preserve RuoYi API behavior, add relevant tests, and update both README translations. Repository guidance is in [AGENTS.md](AGENTS.md); optional AI submodules can be fetched with `git submodule update --init --recursive`.
+| Symptom | What to do |
+| --- | --- |
+| Cannot connect to Docker | Start Docker Desktop / the Docker daemon, then retry |
+| Port already allocated | Change `RUOYI_HTTP_PORT` in `.env`, then run the start command again |
+| Image pull or Go module download fails | Check connectivity and Docker's proxy settings. For Go module downloads only, configure a reachable `GOPROXY` in `.env` (see its example) |
+| MySQL is unhealthy | Run `docker compose logs --tail=100 mysql`; initial setup may take several minutes |
+| MySQL access denied after changing `.env` | An existing database keeps its old password. Restore the previous `.env` value or change the database account password explicitly |
+| API URL works but there is no UI | This repository deploys only the backend; connect the frontend separately |
+| Another computer cannot access the API | For server deployment, set `RUOYI_BIND_ADDRESS=0.0.0.0`, configure the firewall and an HTTPS reverse proxy; replace sample credentials first |
+
+MySQL and Redis are intentionally not published to host ports. Use `docker compose exec mysql mysql -u ruoyi -p ry-vue` to inspect the database. See the [Compose startup documentation](https://docs.docker.com/compose/how-tos/startup-order/) for dependency health checks.
+
+## Development and compatibility
+
+For installation without Docker, SQL initialization order and development commands, see [the source setup guide](docs/development.md).
+
+- REST contracts: `app/admin/api/desc/`; generated Handler/Logic packages are grouped by business module.
+- Redis owns session expiry/renewal and coordinates same-account registration, creation and import writes. The original database schema is unchanged.
+- XLSX import/export streams rows; import commits each user separately and retains successful rows if others fail, matching Java behavior. Legacy XLS import is supported.
+- Tasks are explicit Go functions registered in `internal/tasks`. Built-in `ryTask` samples are included; custom Java tasks must be ported to Go.
+- Generated business code uses RuoYi Java/MyBatis/SQL/Vue templates.
+
+Issues and pull requests are welcome. Describe the reproduction steps and expected RuoYi behavior, add relevant tests, and update both README translations. Do not include credentials or private data in reports.
 
 ## Acknowledgments & license
 
-Thanks to [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue), [go-zero](https://github.com/zeromicro/go-zero), [go-zero-looklook](https://github.com/Mikaelemmmm/go-zero-looklook) and [Excelize](https://github.com/qax-os/excelize).
+Based on [RuoYi-Vue](https://github.com/yangzongzhuan/RuoYi-Vue) by [yangzongzhuan](https://github.com/yangzongzhuan). Thanks to [go-zero](https://github.com/zeromicro/go-zero), [go-zero-looklook](https://github.com/Mikaelemmmm/go-zero-looklook) and [Excelize](https://github.com/qax-os/excelize).
 
-Licensed under [MIT](LICENSE). RuoYi generator templates retain their [upstream license notice](app/admin/api/internal/generator/LICENSE.ruoyi).
+[MIT License](LICENSE). Generator templates retain their [upstream license notice](app/admin/api/internal/generator/LICENSE.ruoyi).

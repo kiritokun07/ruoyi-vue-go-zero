@@ -9,15 +9,26 @@ import (
 const ScheduleColumns = `IFNULL(job_id,0) job_id,IFNULL(job_name,'') job_name,IFNULL(job_group,'') job_group,IFNULL(invoke_target,'') invoke_target,IFNULL(cron_expression,'') cron_expression,IFNULL(misfire_policy,'') misfire_policy,IFNULL(concurrent,'') concurrent,IFNULL(status,'') status,IFNULL(create_by,'') create_by,IFNULL(DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s'),'') create_time,IFNULL(update_by,'') update_by,IFNULL(DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s'),'') update_time,IFNULL(remark,'') remark`
 
 func (m *AdminModel) ScheduleRows(ctx context.Context, r *types.AdminFilter, paged bool) ([]types.ScheduleEntry, int64, error) {
+	return m.scheduleRows(ctx, r, paged, true)
+}
+func (m *AdminModel) ScheduleExportBatch(ctx context.Context, r *types.AdminFilter) ([]types.ScheduleEntry, error) {
+	rows, _, err := m.scheduleRows(ctx, r, true, false)
+	return rows, err
+}
+func (m *AdminModel) scheduleRows(ctx context.Context, r *types.AdminFilter, paged, count bool) ([]types.ScheduleEntry, int64, error) {
 	f := filter{}
 	f.text("job_name", r.JobName)
 	f.equal("job_group", r.JobGroup)
 	f.equal("status", r.Status)
 	f.dates("create_time", &types.ListFilter{BeginTime: r.BeginTime, EndTime: r.EndTime})
 	from := " FROM sys_job" + f.where()
-	n, err := queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
-	if err != nil {
-		return nil, 0, err
+	var n int64
+	if count {
+		var err error
+		n, err = queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 	order := " ORDER BY job_id DESC"
 	if paged {

@@ -4,10 +4,9 @@ import (
 	"regexp"
 	"strings"
 
-	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
-	"ruoyi-vue-go-zero/app/admin/api/internal/model"
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/microcosm-cc/bluemonday"
+	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 func result(value any, err error) (*types.Result, error) {
@@ -33,9 +32,6 @@ func (s *Session) ValidateDictType(r *types.DictTypeEntry, create bool) error {
 	if r.DictName == "" || !dictKeyPattern.MatchString(r.DictType) || !validStatus(r.Status) {
 		return apierror.Business("字典名称、类型或状态无效")
 	}
-	if !create {
-		return s.exec("UPDATE sys_dict_data SET dict_type=? WHERE dict_type=(SELECT dict_type FROM sys_dict_type WHERE dict_id=?)", r.DictType, r.DictId)
-	}
 	return nil
 }
 
@@ -46,7 +42,7 @@ func (s *Session) ValidateDictEntry(r *types.DictEntryEntry, create bool) error 
 	if r.IsDefault == "" {
 		r.IsDefault = "N"
 	}
-	return s.require("SELECT COUNT(*) FROM sys_dict_type WHERE dict_type=?", r.DictType)
+	return requireCount(s.models().DictTypeCount(s.ctx, r.DictType))
 }
 
 var richText = bluemonday.UGCPolicy()
@@ -62,17 +58,29 @@ func (s *Session) ValidateBulletin(r *types.BulletinEntry, create bool) error {
 func (s *Session) BeforeDelete(table string, ids []int64) error {
 	switch table {
 	case "sys_dict_type":
-		return s.rejectIf("SELECT COUNT(*) FROM sys_dict_data d JOIN sys_dict_type t ON t.dict_type=d.dict_type WHERE t.dict_id IN ("+numbers(ids)+")", "字典类型已分配数据")
+		n, err := s.models().DictTypeReferences(s.ctx, ids)
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return apierror.Business("字典类型已分配数据")
+		}
+		return nil
 	case "sys_config":
-		return s.rejectIf("SELECT COUNT(*) FROM sys_config WHERE config_type='Y' AND config_id IN ("+numbers(ids)+")", "系统内置参数不能删除")
-	case "sys_notice":
-		return s.exec("DELETE FROM sys_notice_read WHERE notice_id IN (" + numbers(ids) + ")")
+		n, err := s.models().BuiltinParameterCount(s.ctx, ids)
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return apierror.Business("系统内置参数不能删除")
+		}
+		return nil
 	}
 	return nil
 }
 
 func (s *Session) DictOptions() (*types.Result, error) {
-	v, e := many[types.DictTypeEntry](s, "SELECT "+model.DictTypeColumns+" FROM sys_dict_type ORDER BY dict_id")
+	v, e := s.models().DictOptions(s.ctx)
 	return result(v, e)
 }
 

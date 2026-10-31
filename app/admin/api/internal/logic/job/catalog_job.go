@@ -31,6 +31,9 @@ func (s *catalogService) EditSchedule(r *types.ScheduleEntry) (*types.StatusResp
 	if e := system.RequireCount(s.Models().EditScheduleExists(s.Context(), r.JobId)); e != nil {
 		return nil, e
 	}
+	if err := s.Models().DeleteScheduleTriggers(s.Context(), []int64{r.JobId}); err != nil {
+		return nil, err
+	}
 	return system.Saved(s.Models().EditSchedule(s.Context(), r, s.Actor()))
 }
 

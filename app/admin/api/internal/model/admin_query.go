@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 // AdminModel contains custom administration queries and can bind to the caller's transaction.

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 // Check reads and writes share the caller's transaction, then roll back every fixture.

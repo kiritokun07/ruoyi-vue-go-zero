@@ -2,12 +2,13 @@ package system
 
 import (
 	"net/http/httptest"
+	"ruoyi-vue-go-zero/app/admin/api/internal/tasks"
 	"strings"
 	"testing"
 	"time"
 
-	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"ruoyi-vue-go-zero/app/admin/api/internal/types"
 )
 
 func TestOnlyLocalTableDDL(t *testing.T) {
@@ -40,7 +41,7 @@ func TestQuartzDayAndSeconds(t *testing.T) {
 			t.Errorf("%s: got %v want %v", tc.expr, got, tc.want)
 		}
 	}
-	if _, e := jobMessage("os.exec('echo unexpected')"); e == nil {
+	if e := tasks.Default.Validate("os.exec('echo unexpected')"); e == nil {
 		t.Fatal("unregistered target allowed")
 	}
 }

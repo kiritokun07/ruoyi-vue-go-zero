@@ -9,15 +9,26 @@ import (
 const BulletinColumns = `IFNULL(notice_id,0) notice_id,IFNULL(notice_title,'') notice_title,IFNULL(notice_type,'') notice_type,IFNULL(notice_content,'') notice_content,IFNULL(status,'') status,IFNULL(create_by,'') create_by,IFNULL(DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s'),'') create_time,IFNULL(update_by,'') update_by,IFNULL(DATE_FORMAT(update_time,'%Y-%m-%d %H:%i:%s'),'') update_time,IFNULL(remark,'') remark`
 
 func (m *AdminModel) BulletinRows(ctx context.Context, r *types.AdminFilter, paged bool) ([]types.BulletinEntry, int64, error) {
+	return m.bulletinRows(ctx, r, paged, true)
+}
+func (m *AdminModel) BulletinExportBatch(ctx context.Context, r *types.AdminFilter) ([]types.BulletinEntry, error) {
+	rows, _, err := m.bulletinRows(ctx, r, true, false)
+	return rows, err
+}
+func (m *AdminModel) bulletinRows(ctx context.Context, r *types.AdminFilter, paged, count bool) ([]types.BulletinEntry, int64, error) {
 	f := filter{}
 	f.text("notice_title", r.NoticeTitle)
 	f.equal("notice_type", r.NoticeType)
 	f.text("create_by", r.CreateBy)
 	f.dates("create_time", &types.ListFilter{BeginTime: r.BeginTime, EndTime: r.EndTime})
 	from := " FROM sys_notice" + f.where()
-	n, err := queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
-	if err != nil {
-		return nil, 0, err
+	var n int64
+	if count {
+		var err error
+		n, err = queryOne[int64](ctx, m.db, "SELECT COUNT(*)"+from, f.args...)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 	order := " ORDER BY notice_id DESC"
 	if paged {
@@ -41,4 +52,8 @@ func (m *AdminModel) EditBulletinExists(ctx context.Context, id int64) (int, err
 
 func (m *AdminModel) CreateBulletin(ctx context.Context, r *types.BulletinEntry, actor string) error {
 	return m.exec(ctx, "INSERT INTO sys_notice(notice_title,notice_type,notice_content,status,remark,create_by,create_time) VALUES(?,?,?,?,?,?,NOW())", r.NoticeTitle, r.NoticeType, r.NoticeContent, r.Status, r.Remark, actor)
+}
+
+func (m *AdminModel) DeleteNoticeReaders(ctx context.Context, ids []int64) error {
+	return m.exec(ctx, "DELETE FROM sys_notice_read WHERE notice_id IN ("+numbers(ids)+")")
 }

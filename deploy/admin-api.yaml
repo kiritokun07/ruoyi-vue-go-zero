@@ -1,0 +1,14 @@
+Name: admin-api
+Host: 0.0.0.0
+Port: 8888
+Mode: pro
+Log:
+  Mode: console
+Middlewares:
+  Log: false
+MySQLDSN: "${RUOYI_MYSQL_DSN}"
+Redis:
+  Host: "redis:6379"
+  Pass: "${RUOYI_REDIS_PASSWORD}"
+Auth:
+  AccessSecret: "${RUOYI_JWT_SECRET}"

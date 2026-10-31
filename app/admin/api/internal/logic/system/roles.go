@@ -28,18 +28,15 @@ func (s *Session) roleFilter() filter {
 }
 
 func (s *Session) ListRole(r *types.ListFilter) (*types.RoleList, error) {
-	f := s.roleFilter()
-	f.text("r.role_name", r.RoleName)
-	f.text("r.role_key", r.RoleKey)
-	f.equal("r.status", r.Status)
-	f.dates("r.create_time", r)
-	from := " FROM sys_role r" + f.where()
-	n, e := one[int64](s, "SELECT COUNT(*)"+from, f.args...)
-	if e != nil {
-		return nil, e
+	var roleArgs []any
+	if !s.all {
+		roleArgs = []any{s.name}
 	}
-	rows, e := many[types.RoleRecord](s, "SELECT "+roleColumns+from+" ORDER BY r.role_sort,r.role_id"+page(r), f.args...)
-	return &types.RoleList{StatusResponse: ok(), Rows: rows, Total: n}, e
+	rows, n, err := s.models().RoleRows(s.ctx, r, true, s.roleScope(), roleArgs)
+	if err != nil {
+		return nil, err
+	}
+	return &types.RoleList{StatusResponse: ok(), Rows: rows, Total: n}, nil
 }
 
 func (s *Session) roleAllowed(id int64, write bool) error {

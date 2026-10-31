@@ -21,16 +21,32 @@ import (
 type File struct {
 	Name, Type string
 	Bytes      []byte
+	Body       io.ReadCloser
+	Cleanup    func()
 	AfterSend  func()
 }
 
+func (f *File) Close() {
+	if f.Body != nil {
+		_ = f.Body.Close()
+	}
+	if f.Cleanup != nil {
+		f.Cleanup()
+	}
+}
+
 func (f *File) Send(w http.ResponseWriter) {
+	defer f.Close()
 	w.Header().Set("Content-Type", f.Type)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if f.Name != "" {
 		w.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+url.PathEscape(f.Name))
 	}
-	if _, e := io.Copy(w, bytes.NewReader(f.Bytes)); e == nil && f.AfterSend != nil {
+	var source io.Reader = bytes.NewReader(f.Bytes)
+	if f.Body != nil {
+		source = f.Body
+	}
+	if _, e := io.Copy(w, source); e == nil && f.AfterSend != nil {
 		f.AfterSend()
 	}
 }

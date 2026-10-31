@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
 	"ruoyi-vue-go-zero/app/admin/api/internal/middleware"
 	"ruoyi-vue-go-zero/app/admin/api/internal/model"
 	"ruoyi-vue-go-zero/app/admin/api/internal/svc"
 	"ruoyi-vue-go-zero/app/admin/api/internal/types"
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type Session struct {
@@ -46,13 +46,6 @@ func withSession[T any](ctx context.Context, services *svc.ServiceContext, permi
 	var result *T
 	run := func(db sqlx.Session) error {
 		s := &Session{services: services, ctx: ctx, db: db, user: middleware.Current(ctx).UserID, grants: map[string]bool{}}
-		// Serialize administrative mutations so uniqueness and relationship checks see the previous committed write.
-		if write {
-			var id int64
-			if err := db.QueryRowCtx(ctx, &id, "SELECT user_id FROM sys_user WHERE user_id=1 FOR UPDATE"); err != nil {
-				return err
-			}
-		}
 		if err := s.authorize(permission); err != nil {
 			return err
 		}

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"golang.org/x/crypto/bcrypt"
 	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
 	"ruoyi-vue-go-zero/app/admin/api/internal/model"
 	"ruoyi-vue-go-zero/app/admin/api/internal/types"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func (s *Session) userList(r *types.ListFilter, membership string) (*types.UserPage, error) {
@@ -98,24 +98,42 @@ func (s *Session) UserGrants(r *types.RecordId) (*types.UserGrants, error) {
 
 var phonePattern = regexp.MustCompile(`^[0-9]{11}$`)
 
-func (s *Session) checkProfile(id int64, r types.ProfileInput) error {
+func validateProfile(r types.ProfileInput) error {
 	if strings.TrimSpace(r.NickName) == "" || utf8.RuneCountInString(r.NickName) > 30 {
 		return apierror.Business("昵称不能为空且不能超过30个字符")
 	}
-	if r.Phonenumber != "" {
-		if !phonePattern.MatchString(r.Phonenumber) {
-			return apierror.Business("手机号码格式不正确")
-		}
-		if err := s.rejectIf("SELECT COUNT(*) FROM sys_user WHERE del_flag='0' AND phonenumber=? AND user_id<>?", "手机号码已存在", r.Phonenumber, id); err != nil {
-			return err
-		}
+	if r.Phonenumber != "" && !phonePattern.MatchString(r.Phonenumber) {
+		return apierror.Business("手机号码格式不正确")
 	}
 	if r.Email != "" {
 		addr, err := mail.ParseAddress(r.Email)
 		if err != nil || addr.Address != r.Email || len(r.Email) > 50 {
 			return apierror.Business("邮箱格式不正确")
 		}
-		return s.rejectIf("SELECT COUNT(*) FROM sys_user WHERE del_flag='0' AND email=? AND user_id<>?", "邮箱已存在", r.Email, id)
+	}
+	return nil
+}
+func (s *Session) checkProfile(id int64, r types.ProfileInput) error {
+	if err := validateProfile(r); err != nil {
+		return err
+	}
+	if r.Phonenumber != "" {
+		n, err := s.models().ProfilePhoneConflicts(s.ctx, id, r.Phonenumber)
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return apierror.Business("手机号码已存在")
+		}
+	}
+	if r.Email != "" {
+		n, err := s.models().ProfileEmailConflicts(s.ctx, id, r.Email)
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return apierror.Business("邮箱已存在")
+		}
 	}
 	return nil
 }
