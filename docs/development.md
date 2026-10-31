@@ -69,3 +69,5 @@ RUOYI_SYSTEM_TEST_DSN='dev:password@tcp(127.0.0.1:3306)/ruoyi_test?parseTime=tru
 The example assumes you created and initialized `ruoyi_test` instead of `ry-vue`. Tests temporarily write fixture data.
 
 Follow [AGENTS.md](../AGENTS.md). Optional AI tooling can be downloaded with `git submodule update --init --recursive`; it is not a runtime dependency.
+
+Excel import/export routes explicitly use `timeout: 1m` in their `.api` groups; ordinary routes use go-zero defaults. Large operations can time out; successful import rows remain committed.

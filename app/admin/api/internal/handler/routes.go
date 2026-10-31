@@ -5,6 +5,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	auth "ruoyi-vue-go-zero/app/admin/api/internal/handler/auth"
 	cache "ruoyi-vue-go-zero/app/admin/api/internal/handler/cache"
@@ -154,11 +155,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: job.DeleteScheduleHandler(serverCtx),
 				},
 				{
-					Method:  http.MethodPost,
-					Path:    "/monitor/job/export",
-					Handler: job.ExportScheduleHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodPut,
 					Path:    "/monitor/job/changeStatus",
 					Handler: job.JobStatusHandler(serverCtx),
@@ -170,6 +166,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/job/export",
+					Handler: job.ExportScheduleHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -196,6 +206,14 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/monitor/jobLog/clean",
 					Handler: job_log.CleanJobLogHandler(serverCtx),
 				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
 				{
 					Method:  http.MethodPost,
 					Path:    "/monitor/jobLog/export",
@@ -203,6 +221,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -225,17 +244,26 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: login_log.CleanLoginEventHandler(serverCtx),
 				},
 				{
-					Method:  http.MethodPost,
-					Path:    "/monitor/logininfor/export",
-					Handler: login_log.ExportLoginEventHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodGet,
 					Path:    "/monitor/logininfor/unlock/:key",
 					Handler: login_log.UnlockLoginHandler(serverCtx),
 				},
 			}...,
 		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/logininfor/export",
+					Handler: login_log.ExportLoginEventHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -275,6 +303,14 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/monitor/operlog/clean",
 					Handler: operation_log.CleanOperationHandler(serverCtx),
 				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
 				{
 					Method:  http.MethodPost,
 					Path:    "/monitor/operlog/export",
@@ -282,6 +318,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -337,17 +374,26 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: config.DeleteParameterHandler(serverCtx),
 				},
 				{
-					Method:  http.MethodPost,
-					Path:    "/system/config/export",
-					Handler: config.ExportParameterHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodDelete,
 					Path:    "/system/config/refreshCache",
 					Handler: config.RefreshConfigHandler(serverCtx),
 				},
 			}...,
 		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/config/export",
+					Handler: config.ExportParameterHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -438,11 +484,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: dict.DeleteDictTypeHandler(serverCtx),
 				},
 				{
-					Method:  http.MethodPost,
-					Path:    "/system/dict/type/export",
-					Handler: dict.ExportDictTypeHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodGet,
 					Path:    "/system/dict/data/list",
 					Handler: dict.ListDictEntryHandler(serverCtx),
@@ -468,11 +509,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: dict.DeleteDictEntryHandler(serverCtx),
 				},
 				{
-					Method:  http.MethodPost,
-					Path:    "/system/dict/data/export",
-					Handler: dict.ExportDictEntryHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodGet,
 					Path:    "/system/dict/type/optionselect",
 					Handler: dict.DictOptionsHandler(serverCtx),
@@ -484,6 +520,25 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/type/export",
+					Handler: dict.ExportDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/data/export",
+					Handler: dict.ExportDictEntryHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -620,6 +675,14 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/system/post/optionselect",
 					Handler: post.PostOptionsHandler(serverCtx),
 				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
 				{
 					Method:  http.MethodPost,
 					Path:    "/system/post/export",
@@ -627,6 +690,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -711,6 +775,14 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/system/role/optionselect",
 					Handler: role.RoleOptionsHandler(serverCtx),
 				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
 				{
 					Method:  http.MethodPost,
 					Path:    "/system/role/export",
@@ -718,6 +790,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -810,6 +883,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(
@@ -823,6 +897,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 			}...,
 		),
+		rest.WithTimeout(60000*time.Millisecond),
 		rest.WithMaxBytes(33554432),
 	)
 

@@ -61,8 +61,6 @@ service admin-api {
 	put /system/dict/type (DictTypeEntry) returns (StatusResponse)
 	@handler DeleteDictType
 	delete /system/dict/type/:ids (RecordIds) returns (StatusResponse)
-	@handler ExportDictType
-	post /system/dict/type/export (AdminFilter)
 	@handler ListDictEntry
 	get /system/dict/data/list (AdminFilter) returns (PageResult)
 	@handler GetDictEntry
@@ -73,12 +71,23 @@ service admin-api {
 	put /system/dict/data (DictEntryEntry) returns (StatusResponse)
 	@handler DeleteDictEntry
 	delete /system/dict/data/:ids (RecordIds) returns (StatusResponse)
-	@handler ExportDictEntry
-	post /system/dict/data/export (AdminFilter)
 	@handler DictOptions
 	get /system/dict/type/optionselect returns (Result)
 	@handler RefreshDictionary
 	delete /system/dict/type/refreshCache returns (StatusResponse)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: dict
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
+	@handler ExportDictType
+	post /system/dict/type/export (AdminFilter)
+	@handler ExportDictEntry
+	post /system/dict/data/export (AdminFilter)
 }
 
 @server (

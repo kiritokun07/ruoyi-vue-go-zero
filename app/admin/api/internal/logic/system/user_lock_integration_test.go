@@ -27,7 +27,9 @@ func TestRedisUsernameWrites(t *testing.T) {
 	db := sqlx.NewMysql(dsn)
 	ctx := context.Background()
 	server := miniredis.RunT(t)
-	sc := &svc.ServiceContext{DB: db, Redis: redis.New(server.Addr())}
+	// miniredis does not implement CLIENT SETINFO; disable that handshake so
+	// unsupported test-server commands do not count as Redis circuit-breaker failures.
+	sc := &svc.ServiceContext{DB: db, Redis: redis.New(server.Addr(), redis.WithIdentity())}
 	name := "lock_" + uuid.NewString()[:8]
 	defer db.ExecCtx(ctx, "DELETE FROM sys_user WHERE user_name=?", name)
 	var count int
@@ -115,6 +117,17 @@ func TestRedisUsernameWrites(t *testing.T) {
 			t.Fatal("case-equivalent names have different locks", err)
 		}
 	}
+	// If ownership changes after lease expiry, the old request must not delete the new lock.
+	_, err = withUserWrite(ctx, sc, name, func(context.Context) (*types.StatusResponse, error) {
+		return nil, sc.Redis.SetexCtx(ctx, key, "new-owner", 60)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value, getErr := server.Get(key); getErr != nil || value != "new-owner" {
+		t.Fatal("released another request's lock", getErr)
+	}
+	server.Del(key)
 	// Redis outage fails closed: do not execute the database callback.
 	server.Close()
 	if _, err := withUserWrite(ctx, sc, name, func(context.Context) (*types.StatusResponse, error) {

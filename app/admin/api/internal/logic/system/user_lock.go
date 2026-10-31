@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/redis"
 	"ruoyi-vue-go-zero/app/admin/api/internal/apierror"
 	"ruoyi-vue-go-zero/app/admin/api/internal/model"
 	"ruoyi-vue-go-zero/app/admin/api/internal/svc"
@@ -21,10 +21,10 @@ func withUserWrite[T any](ctx context.Context, sc *svc.ServiceContext, name stri
 	if err != nil {
 		return nil, err
 	}
-	lock := redis.NewRedisLock(sc.Redis, key)
+	// SET NX avoids concurrent EVALSHA cache misses tripping the Redis breaker.
 	// The lease exceeds the bounded transaction lifetime, including cleanup time.
-	lock.SetExpire(60)
-	acquired, err := lock.AcquireCtx(ctx)
+	owner := uuid.NewString()
+	acquired, err := sc.Redis.SetnxExCtx(ctx, key, owner, 60)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func withUserWrite[T any](ctx context.Context, sc *svc.ServiceContext, name stri
 	defer func() {
 		releaseCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		if _, err := lock.ReleaseCtx(releaseCtx); err != nil {
+		if _, err := sc.Redis.EvalCtx(releaseCtx, `if redis.call("GET",KEYS[1])==ARGV[1] then return redis.call("DEL",KEYS[1]) end;return 0`, []string{key}, owner); err != nil {
 			logx.WithContext(ctx).Error(err)
 		}
 	}()

@@ -31,6 +31,15 @@ service admin-api {
 	delete /monitor/operlog/:ids (RecordIds) returns (StatusResponse)
 	@handler CleanOperation
 	delete /monitor/operlog/clean returns (StatusResponse)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: operation_log
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
 	@handler ExportOperation
 	post /monitor/operlog/export (AdminFilter)
 }

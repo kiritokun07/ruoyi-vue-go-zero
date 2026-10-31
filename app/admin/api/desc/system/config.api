@@ -28,10 +28,19 @@ service admin-api {
 	put /system/config (ParameterEntry) returns (StatusResponse)
 	@handler DeleteParameter
 	delete /system/config/:ids (RecordIds) returns (StatusResponse)
-	@handler ExportParameter
-	post /system/config/export (AdminFilter)
 	@handler RefreshConfig
 	delete /system/config/refreshCache returns (StatusResponse)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: config
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
+	@handler ExportParameter
+	post /system/config/export (AdminFilter)
 }
 
 @server (

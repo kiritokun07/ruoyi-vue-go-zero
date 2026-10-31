@@ -54,6 +54,7 @@ type UserGrants {
 @server (
 	group: users
 	middleware: Session
+	timeout: 1m
 )
 service admin-api {
 	@handler ExportUsers
@@ -66,6 +67,7 @@ service admin-api {
 	group: users
 	middleware: Session
 	maxBytes: 33554432
+	timeout: 1m
 )
 service admin-api {
 	@handler ImportUsers

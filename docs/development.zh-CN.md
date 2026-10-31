@@ -69,3 +69,5 @@ RUOYI_SYSTEM_TEST_DSN='dev:password@tcp(127.0.0.1:3306)/ruoyi_test?parseTime=tru
 此示例假定将前面命令中的 `ry-vue` 替换成了 `ruoyi_test`，并完成建库与初始化。测试会临时写入测试数据。
 
 开发约定见 [AGENTS.md](../AGENTS.md)。可执行 `git submodule update --init --recursive` 下载可选 AI 工具，它们不是运行依赖。
+
+Excel 导入导出接口在 `.api` 分组中显式设置 `timeout: 1m`，普通接口使用 go-zero 默认值。大批量操作可能超时；已成功导入的记录会保留。

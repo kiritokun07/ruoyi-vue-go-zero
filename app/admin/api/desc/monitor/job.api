@@ -32,10 +32,19 @@ service admin-api {
 	put /monitor/job (ScheduleEntry) returns (StatusResponse)
 	@handler DeleteSchedule
 	delete /monitor/job/:ids (RecordIds) returns (StatusResponse)
-	@handler ExportSchedule
-	post /monitor/job/export (AdminFilter)
 	@handler JobStatus
 	put /monitor/job/changeStatus (ScheduleEntry) returns (StatusResponse)
 	@handler RunJob
 	put /monitor/job/run (ScheduleEntry) returns (StatusResponse)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: job
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
+	@handler ExportSchedule
+	post /monitor/job/export (AdminFilter)
 }

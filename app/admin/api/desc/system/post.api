@@ -28,6 +28,15 @@ type PostList {
 service admin-api {
 	@handler PostOptions
 	get /system/post/optionselect returns (Result)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: post
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
 	@handler ExportPosts
 	post /system/post/export (ListFilter)
 }

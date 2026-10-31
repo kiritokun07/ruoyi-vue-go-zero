@@ -24,6 +24,15 @@ service admin-api {
 	delete /monitor/jobLog/:ids (RecordIds) returns (StatusResponse)
 	@handler CleanJobLog
 	delete /monitor/jobLog/clean returns (StatusResponse)
+}
+
+// 导入导出接口独立设置超时，普通接口沿用 go-zero 默认值。
+@server (
+	group: job_log
+	middleware: Session
+	timeout: 1m
+)
+service admin-api {
 	@handler ExportJobLog
 	post /monitor/jobLog/export (AdminFilter)
 }
