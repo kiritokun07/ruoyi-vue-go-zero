@@ -1,4 +1,5 @@
 Name: admin-api
+# 容器内监听所有网卡，外部访问范围由 compose.yaml 的端口绑定控制。
 Host: 0.0.0.0
 Port: 8888
 Mode: pro
@@ -6,9 +7,10 @@ Log:
   Mode: console
 Middlewares:
   Log: false
+# 连接地址由 Compose 根据 .env 注入，可连接外部服务或可选容器。
 MySQLDSN: "${RUOYI_MYSQL_DSN}"
 Redis:
-  Host: "redis:6379"
+  Host: "${RUOYI_REDIS_HOST}"
   Pass: "${RUOYI_REDIS_PASSWORD}"
 Auth:
   AccessSecret: "${RUOYI_JWT_SECRET}"

@@ -4,11 +4,11 @@
 
 [English](README.md) | 简体中文
 
-**本仓库只包含后端。** 以下部署会启动后端 API、MySQL 和 Redis。需要管理界面时，请单独接入兼容的 [RuoYi-Vue3 前端](https://github.com/yangzongzhuan/RuoYi-Vue3)。
+**本仓库只包含后端。** 默认仅启动后端 API，连接已有 MySQL 和 Redis；也可通过配置启用配套容器。需要管理界面时，请单独接入兼容的 [RuoYi-Vue3 前端](https://github.com/yangzongzhuan/RuoYi-Vue3)。
 
 ## Docker 安装（推荐）
 
-无需在电脑上另外安装 Go、MySQL 或 Redis。
+无需安装 Go。默认连接已有 MySQL 和 Redis；没有数据库或缓存时，可按第 3 步启用配套容器。
 
 ### 1. 安装工具
 
@@ -30,15 +30,28 @@ cp .env.example .env
 
 ### 3. 检查配置
 
-用文本编辑器打开 `.env`。示例值可以直接用于**本机体验**：
+用文本编辑器打开 `.env`。默认 `COMPOSE_PROFILES` 留空，**不会启动 MySQL、Redis 容器**。请先选择连接方式：
+
+- **使用已有服务（默认）**：填写实际 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_DATABASE`、`MYSQL_USER`、`MYSQL_PASSWORD`、`RUOYI_REDIS_HOST` 和密码。已有数据库需包含项目表结构；空库请按[源码指南](docs/development.zh-CN.md#初始化数据库)初始化，后端不会自动修改外部数据库。
+- **启用配套容器**：将下面三项写入 `.env`，其余数据库账号、密码沿用示例即可用于本机体验：
+
+```dotenv
+COMPOSE_PROFILES=mysql,redis
+MYSQL_HOST=mysql
+RUOYI_REDIS_HOST=redis:6379
+```
+
+也可以只设置 `COMPOSE_PROFILES=mysql` 或 `COMPOSE_PROFILES=redis`，另一项继续连接外部服务。内置 MySQL 端口为 `3306`，数据库普通账号不能使用 `root`。容器访问宿主机请使用 `host.docker.internal`；宿主机服务必须允许容器网络连接。
+
+其他配置：
 
 | 配置项 | 用途 |
 | --- | --- |
 | `RUOYI_HTTP_PORT` | 后端端口，默认 `8888`；被占用时可改为 `18888` |
 | `RUOYI_BIND_ADDRESS` | 默认 `127.0.0.1`，仅允许本机访问 |
-| `MYSQL_PASSWORD` / `MYSQL_ROOT_PASSWORD` | 数据库普通账号和管理员账号的密码 |
+| `MYSQL_PASSWORD` / `MYSQL_ROOT_PASSWORD` | 连接数据库的密码 / 仅内置 MySQL 使用的管理员密码 |
 | `RUOYI_JWT_SECRET` | token 签名密钥，至少 32 个字符；重启时保持不变 |
-| `RUOYI_REDIS_PASSWORD` | 容器内部网络中的 Redis 密码，可留空 |
+| `RUOYI_REDIS_PASSWORD` | Redis 密码；外部服务需填写实际密码，无密码时留空 |
 
 多人使用或部署到服务器前，请将示例密码和密钥改成随机字母数字串。例如，`openssl rand -hex 32` 可生成一个合适的随机值。不要公开 `.env`，Git 已忽略该文件。
 
@@ -48,7 +61,7 @@ cp .env.example .env
 docker compose up -d --build --wait
 ```
 
-第一次启动会下载镜像、编译 Go，并自动初始化 `ry-vue` 数据库，可能需要几分钟。MySQL 和 Redis 使用容器内部端口，不占用电脑已有的 3306、6379 端口。
+第一次启动会下载镜像并编译 Go，可能需要几分钟。只有启用内置 MySQL 时才会初始化空数据卷中的数据库（默认 `ry-vue`）；配套 MySQL、Redis 不占用宿主机的 3306、6379 端口。
 
 ### 5. 确认安装成功
 
@@ -56,7 +69,7 @@ docker compose up -d --build --wait
 docker compose ps
 ```
 
-三个服务 `api`、`mysql`、`redis` 都应显示 **healthy**。在浏览器中打开：
+默认只看到 `api`；启用配套容器后还会看到 `mysql`、`redis`。已启用的服务应显示 **healthy**。后端健康检查只确认 HTTP 服务可访问，验证码和登录接口还需数据库、Redis 连接正常。在浏览器中打开：
 
 - API 欢迎页：<http://localhost:8888/>
 - Swagger 接口文档：<http://localhost:8888/swagger-ui/index.html>
@@ -72,7 +85,7 @@ docker compose ps
 
 ```bash
 docker compose logs -f --tail=100 api    # 查看后端日志，Ctrl+C 只退出查看
-docker compose logs --tail=100 mysql   # 查看数据库启动、初始化日志
+docker compose logs --tail=100 mysql   # 查看内置数据库日志（启用后）
 docker compose restart api            # 重启后端
 docker compose down                   # 停止服务，保留数据
 
@@ -80,7 +93,9 @@ git pull
 docker compose up -d --build --wait    # 更新代码后重新构建并启动
 ```
 
-数据库、Redis 数据、上传和生成的文件保存在 Docker 数据卷中。**不要执行 `docker compose down -v`，除非确定要删除本次部署的全部数据。** 升级前请备份数据库和文件。初始化 SQL 只会在 MySQL 数据卷为空时执行，后续表结构升级应按版本说明操作。
+启用内置服务时，数据库和 Redis 数据保存在 Docker 数据卷中；上传和生成的文件始终保存在后端数据卷。外部数据库、Redis 数据由你原有的服务管理。**不要执行 `docker compose down -v`，除非确定要删除本次部署的全部数据。** 升级前请备份数据库和文件。初始化 SQL 只会在 MySQL 数据卷为空时执行，后续表结构升级应按版本说明操作。
+
+从内置容器切换为外部服务时，先执行 `docker compose down`（不要加 `-v`），再清空 `COMPOSE_PROFILES`、修改连接地址并重新启动。仅清空 profile 不会自动停止已运行的数据库容器。
 
 ## 常见问题
 
@@ -94,7 +109,7 @@ docker compose up -d --build --wait    # 更新代码后重新构建并启动
 | 能打开 API，却没有管理界面 | 本仓库只部署后端，需要另外接入前端 |
 | 其他电脑无法访问 | 服务器部署时将 `RUOYI_BIND_ADDRESS` 改为 `0.0.0.0`，配置防火墙和 HTTPS 反向代理；先替换示例密码 |
 
-MySQL 和 Redis 默认不开放宿主机端口。查看数据库可执行 `docker compose exec mysql mysql -u ruoyi -p ry-vue`。服务启动顺序的原理见 [Compose 官方说明](https://docs.docker.com/compose/how-tos/startup-order/)。
+启用配套容器后，MySQL 和 Redis 仍不开放宿主机端口。查看内置数据库可执行 `docker compose exec mysql mysql -u ruoyi -p ry-vue`。服务启动顺序的原理见 [Compose 官方说明](https://docs.docker.com/compose/how-tos/startup-order/)。
 
 ## 开发与兼容说明
 

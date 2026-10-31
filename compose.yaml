@@ -1,3 +1,4 @@
+# 默认只启动 api；在 .env 设置 COMPOSE_PROFILES=mysql,redis 后才启用配套容器。
 name: ruoyi-go
 
 services:
@@ -9,18 +10,25 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      RUOYI_MYSQL_DSN: "ruoyi:${MYSQL_PASSWORD:?Copy .env.example to .env first}@tcp(mysql:3306)/ry-vue?parseTime=true&loc=Local&charset=utf8mb4"
+      RUOYI_MYSQL_DSN: "${MYSQL_USER:-ruoyi}:${MYSQL_PASSWORD:?请先复制 .env.example 为 .env 并配置数据库密码}@tcp(${MYSQL_HOST:-host.docker.internal}:${MYSQL_PORT:-3306})/${MYSQL_DATABASE:-ry-vue}?parseTime=true&loc=Local&charset=utf8mb4"
+      RUOYI_REDIS_HOST: "${RUOYI_REDIS_HOST:-host.docker.internal:6379}"
       RUOYI_REDIS_PASSWORD: "${RUOYI_REDIS_PASSWORD:-}"
       RUOYI_JWT_SECRET: "${RUOYI_JWT_SECRET:?Set RUOYI_JWT_SECRET in .env}"
+    # Linux 同样可通过 host.docker.internal 访问宿主机；不要填写容器自己的 localhost。
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${RUOYI_BIND_ADDRESS:-127.0.0.1}:${RUOYI_HTTP_PORT:-8888}:8888"
     volumes:
       - runtime:/app/var
+    # 未启用 profile 时允许连接外部服务；启用后等待相应容器初始化并健康。
     depends_on:
       mysql:
         condition: service_healthy
+        required: false
       redis:
         condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8888/"]
       interval: 15s
@@ -33,17 +41,21 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # 可选数据库：COMPOSE_PROFILES 包含 mysql 时才启动。不会修改外部数据库。
   mysql:
+    profiles: [mysql]
     image: mysql:8.4
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      MYSQL_DATABASE: ry-vue
-      MYSQL_USER: ruoyi
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-ry-vue}"
+      MYSQL_USER: "${MYSQL_USER:-ruoyi}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}"
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}"
+      # 仅内置 MySQL 使用；首次初始化后改 .env 不会修改数据库中的密码。
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-localRootChangeMe2026}"
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
     volumes:
+      # SQL 只在空数据卷首次启动时按文件名前缀顺序执行。
       - mysql-data:/var/lib/mysql
       - ./sql/auth_schema.sql:/docker-entrypoint-initdb.d/01-auth-schema.sql:ro
       - ./sql/dev_seed.sql:/docker-entrypoint-initdb.d/02-auth-seed.sql:ro
@@ -61,7 +73,9 @@ services:
       retries: 20
       start_period: 40s
 
+  # 可选缓存：COMPOSE_PROFILES 包含 redis 时才启动。
   redis:
+    profiles: [redis]
     image: redis:7.4-alpine
     restart: unless-stopped
     environment:
@@ -75,6 +89,7 @@ services:
       timeout: 3s
       retries: 5
 
+# 数据卷在 down 后保留；down -v 会删除这些数据。
 volumes:
   mysql-data:
   redis-data:
