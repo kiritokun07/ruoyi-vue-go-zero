@@ -1,0 +1,36 @@
+syntax = "v1"
+
+type OperationEntry {
+	OperId        int64  `json:"operId,optional" db:"oper_id"`
+	Title         string `json:"title,optional" db:"title"`
+	BusinessType  int64  `json:"businessType,optional" db:"business_type"`
+	Method        string `json:"method,optional" db:"method"`
+	RequestMethod string `json:"requestMethod,optional" db:"request_method"`
+	OperatorType  int64  `json:"operatorType,optional" db:"operator_type"`
+	OperName      string `json:"operName,optional" db:"oper_name"`
+	DeptName      string `json:"deptName,optional" db:"dept_name"`
+	OperUrl       string `json:"operUrl,optional" db:"oper_url"`
+	OperIp        string `json:"operIp,optional" db:"oper_ip"`
+	OperLocation  string `json:"operLocation,optional" db:"oper_location"`
+	OperParam     string `json:"operParam,optional" db:"oper_param"`
+	JsonResult    string `json:"jsonResult,optional" db:"json_result"`
+	Status        int64  `json:"status,optional" db:"status"`
+	ErrorMsg      string `json:"errorMsg,optional" db:"error_msg"`
+	OperTime      string `json:"operTime,optional" db:"oper_time"`
+	CostTime      int64  `json:"costTime,optional" db:"cost_time"`
+}
+
+@server (
+	group: operation_log
+	middleware: Session
+)
+service admin-api {
+	@handler ListOperation
+	get /monitor/operlog/list (AdminFilter) returns (PageResult)
+	@handler DeleteOperation
+	delete /monitor/operlog/:ids (RecordIds) returns (StatusResponse)
+	@handler CleanOperation
+	delete /monitor/operlog/clean returns (StatusResponse)
+	@handler ExportOperation
+	post /monitor/operlog/export (AdminFilter)
+}

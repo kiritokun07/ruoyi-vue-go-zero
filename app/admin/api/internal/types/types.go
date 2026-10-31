@@ -3,6 +3,13 @@
 
 package types
 
+type LoginRequest struct {
+	Username string `json:"username,optional" validate:"required,min=2,max=20"`
+	Password string `json:"password,optional" validate:"required,min=5,max=20"`
+	Code     string `json:"code,optional"`
+	Uuid     string `json:"uuid,optional"`
+}
+
 type CaptchaResponse struct {
 	Code           int    `json:"code"`
 	Msg            string `json:"msg"`
@@ -11,15 +18,638 @@ type CaptchaResponse struct {
 	Img            string `json:"img,omitempty"`
 }
 
-type LoginRequest struct {
-	Username string `json:"username,optional" validate:"required,min=2,max=20"`
-	Password string `json:"password,optional" validate:"required,min=5,max=20"`
-	Code     string `json:"code,optional"`
-	Uuid     string `json:"uuid,optional"`
-}
-
 type LoginResponse struct {
 	Code  int    `json:"code"`
 	Msg   string `json:"msg"`
 	Token string `json:"token"`
+}
+
+type InfoResponse struct {
+	StatusResponse
+	User               UserProfile `json:"user"`
+	Roles              []string    `json:"roles"`
+	Permissions        []string    `json:"permissions"`
+	IsDefaultModifyPwd bool        `json:"isDefaultModifyPwd"`
+	IsPasswordExpired  bool        `json:"isPasswordExpired"`
+}
+
+type RouteMeta struct {
+	Title   string `json:"title"`
+	Icon    string `json:"icon"`
+	NoCache bool   `json:"noCache"`
+	Link    string `json:"link,omitempty"`
+}
+
+type Route struct {
+	Name       string     `json:"name,omitempty"`
+	Path       string     `json:"path"`
+	Hidden     bool       `json:"hidden"`
+	Component  string     `json:"component,omitempty"`
+	Query      string     `json:"query,omitempty"`
+	Redirect   string     `json:"redirect,omitempty"`
+	AlwaysShow bool       `json:"alwaysShow,omitempty"`
+	Meta       *RouteMeta `json:"meta,omitempty"`
+	Children   []Route    `json:"children,omitempty"`
+}
+
+type RoutersResponse struct {
+	StatusResponse
+	Data []Route `json:"data"`
+}
+
+type StatusResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+}
+
+type Department struct {
+	DeptId    int64  `json:"deptId" db:"dept_id"`
+	ParentId  int64  `json:"parentId" db:"parent_id"`
+	Ancestors string `json:"ancestors" db:"ancestors"`
+	DeptName  string `json:"deptName" db:"dept_name"`
+	OrderNum  int    `json:"orderNum" db:"order_num"`
+	Leader    string `json:"leader" db:"leader"`
+	Status    string `json:"status" db:"status"`
+}
+
+type Role struct {
+	RoleId      int64    `json:"roleId" db:"role_id"`
+	RoleName    string   `json:"roleName" db:"role_name"`
+	RoleKey     string   `json:"roleKey" db:"role_key"`
+	RoleSort    int      `json:"roleSort" db:"role_sort"`
+	DataScope   string   `json:"dataScope" db:"data_scope"`
+	Status      string   `json:"status" db:"status"`
+	Admin       bool     `json:"admin" db:"admin"`
+	Permissions []string `json:"permissions,omitempty" db:"-"`
+}
+
+type UserProfile struct {
+	UserId        int64       `json:"userId" db:"user_id"`
+	DeptId        *int64      `json:"deptId" db:"dept_id"`
+	UserName      string      `json:"userName" db:"user_name"`
+	NickName      string      `json:"nickName" db:"nick_name"`
+	Email         string      `json:"email" db:"email"`
+	Phonenumber   string      `json:"phonenumber" db:"phonenumber"`
+	Sex           string      `json:"sex" db:"sex"`
+	Avatar        string      `json:"avatar" db:"avatar"`
+	Status        string      `json:"status" db:"status"`
+	DelFlag       string      `json:"delFlag" db:"del_flag"`
+	LoginIp       string      `json:"loginIp" db:"login_ip"`
+	LoginDate     *string     `json:"loginDate" db:"login_date"`
+	PwdUpdateDate *string     `json:"pwdUpdateDate" db:"pwd_update_date"`
+	CreateBy      string      `json:"createBy" db:"create_by"`
+	CreateTime    *string     `json:"createTime" db:"create_time"`
+	Remark        string      `json:"remark" db:"remark"`
+	Admin         bool        `json:"admin" db:"admin"`
+	Dept          *Department `json:"dept" db:"-"`
+	Roles         []Role      `json:"roles" db:"-"`
+}
+
+type Result struct {
+	StatusResponse
+	Data interface{} `json:"data,omitempty"`
+}
+
+type PageResult struct {
+	StatusResponse
+	Rows  interface{} `json:"rows"`
+	Total int64       `json:"total"`
+}
+
+type AdminFilter struct {
+	OrderByColumn string `form:"orderByColumn,optional"`
+	IsAsc         string `form:"isAsc,optional"`
+	SearchValue   string `form:"searchValue,optional"`
+	ConfigName    string `form:"configName,optional" db:"config_name"`
+	ConfigKey     string `form:"configKey,optional" db:"config_key"`
+	ConfigType    string `form:"configType,optional" db:"config_type"`
+	DictName      string `form:"dictName,optional" db:"dict_name"`
+	DictType      string `form:"dictType,optional" db:"dict_type"`
+	DictLabel     string `form:"dictLabel,optional" db:"dict_label"`
+	NoticeTitle   string `form:"noticeTitle,optional" db:"notice_title"`
+	NoticeType    string `form:"noticeType,optional" db:"notice_type"`
+	CreateBy      string `form:"createBy,optional" db:"create_by"`
+	JobName       string `form:"jobName,optional" db:"job_name"`
+	JobGroup      string `form:"jobGroup,optional" db:"job_group"`
+	Ipaddr        string `form:"ipaddr,optional" db:"ipaddr"`
+	UserName      string `form:"userName,optional" db:"user_name"`
+	Status        string `form:"status,optional" db:"status"`
+	Title         string `form:"title,optional" db:"title"`
+	OperName      string `form:"operName,optional" db:"oper_name"`
+	OperIp        string `form:"operIp,optional" db:"oper_ip"`
+	BusinessType  string `form:"businessType,optional" db:"business_type"`
+	BeginTime     string `form:"params[beginTime],optional" db:"begin_time"`
+	EndTime       string `form:"params[endTime],optional" db:"end_time"`
+	TableName     string `form:"tableName,optional" db:"table_name"`
+	TableComment  string `form:"tableComment,optional" db:"table_comment"`
+	NickName      string `form:"nickName,optional" db:"nick_name"`
+	Phonenumber   string `form:"phonenumber,optional" db:"phonenumber"`
+	IsRead        string `form:"isRead,optional" db:"is_read"`
+	NoticeId      int64  `form:"noticeId,optional" db:"notice_id"`
+	PageNum       int    `form:"pageNum,optional" db:"page_num"`
+	PageSize      int    `form:"pageSize,optional" db:"page_size"`
+}
+
+type RecordId struct {
+	Id int64 `path:"id" db:"id"`
+}
+
+type RecordIds struct {
+	Ids string `path:"ids" db:"ids"`
+}
+
+type LookupKey struct {
+	Key string `path:"key" db:"key"`
+}
+
+type ListFilter struct {
+	UserName    string `form:"userName,optional" db:"user_name"`
+	NickName    string `form:"nickName,optional" db:"nick_name"`
+	Phonenumber string `form:"phonenumber,optional" db:"phonenumber"`
+	Status      string `form:"status,optional" db:"status"`
+	BeginTime   string `form:"params[beginTime],optional" db:"begin_time"`
+	EndTime     string `form:"params[endTime],optional" db:"end_time"`
+	DeptName    string `form:"deptName,optional" db:"dept_name"`
+	PostCode    string `form:"postCode,optional" db:"post_code"`
+	PostName    string `form:"postName,optional" db:"post_name"`
+	RoleName    string `form:"roleName,optional" db:"role_name"`
+	RoleKey     string `form:"roleKey,optional" db:"role_key"`
+	MenuName    string `form:"menuName,optional" db:"menu_name"`
+	Visible     string `form:"visible,optional" db:"visible"`
+	DeptId      int64  `form:"deptId,optional" db:"dept_id"`
+	UserId      int64  `form:"userId,optional" db:"user_id"`
+	RoleId      int64  `form:"roleId,optional" db:"role_id"`
+	PageNum     int    `form:"pageNum,optional" db:"page_num"`
+	PageSize    int    `form:"pageSize,optional" db:"page_size"`
+}
+
+type TreeNode struct {
+	Id       int64      `json:"id,optional" db:"id"`
+	Label    string     `json:"label,optional" db:"label"`
+	Disabled bool       `json:"disabled,optional" db:"disabled"`
+	Children []TreeNode `json:"children,optional" db:"children"`
+}
+
+type SortInput struct {
+	MenuIds   string `json:"menuIds,optional" db:"menu_ids"`
+	DeptIds   string `json:"deptIds,optional" db:"dept_ids"`
+	OrderNums string `json:"orderNums,optional" db:"order_nums"`
+}
+
+type TreeResult struct {
+	StatusResponse
+	Data []TreeNode `json:"data"`
+}
+
+type KeyPair struct {
+	Name string `path:"name" db:"name"`
+	Key  string `path:"key" db:"key"`
+}
+
+type ScheduleEntry struct {
+	NextValidTime  string `json:"nextValidTime,optional,omitempty" db:"-"`
+	JobId          int64  `json:"jobId,optional" db:"job_id"`
+	JobName        string `json:"jobName,optional" db:"job_name"`
+	JobGroup       string `json:"jobGroup,optional" db:"job_group"`
+	InvokeTarget   string `json:"invokeTarget,optional" db:"invoke_target"`
+	CronExpression string `json:"cronExpression,optional" db:"cron_expression"`
+	MisfirePolicy  string `json:"misfirePolicy,optional" db:"misfire_policy"`
+	Concurrent     string `json:"concurrent,optional" db:"concurrent"`
+	Status         string `json:"status,optional" db:"status"`
+	CreateBy       string `json:"createBy,optional" db:"create_by"`
+	CreateTime     string `json:"createTime,optional" db:"create_time"`
+	UpdateBy       string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime     string `json:"updateTime,optional" db:"update_time"`
+	Remark         string `json:"remark,optional" db:"remark"`
+}
+
+type JobLogEntry struct {
+	JobLogId      int64  `json:"jobLogId,optional" db:"job_log_id"`
+	JobName       string `json:"jobName,optional" db:"job_name"`
+	JobGroup      string `json:"jobGroup,optional" db:"job_group"`
+	InvokeTarget  string `json:"invokeTarget,optional" db:"invoke_target"`
+	JobMessage    string `json:"jobMessage,optional" db:"job_message"`
+	Status        string `json:"status,optional" db:"status"`
+	ExceptionInfo string `json:"exceptionInfo,optional" db:"exception_info"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+}
+
+type LoginEventEntry struct {
+	InfoId        int64  `json:"infoId,optional" db:"info_id"`
+	UserName      string `json:"userName,optional" db:"user_name"`
+	Ipaddr        string `json:"ipaddr,optional" db:"ipaddr"`
+	LoginLocation string `json:"loginLocation,optional" db:"login_location"`
+	Browser       string `json:"browser,optional" db:"browser"`
+	Os            string `json:"os,optional" db:"os"`
+	Status        string `json:"status,optional" db:"status"`
+	Msg           string `json:"msg,optional" db:"msg"`
+	LoginTime     string `json:"loginTime,optional" db:"login_time"`
+}
+
+type OperationEntry struct {
+	OperId        int64  `json:"operId,optional" db:"oper_id"`
+	Title         string `json:"title,optional" db:"title"`
+	BusinessType  int64  `json:"businessType,optional" db:"business_type"`
+	Method        string `json:"method,optional" db:"method"`
+	RequestMethod string `json:"requestMethod,optional" db:"request_method"`
+	OperatorType  int64  `json:"operatorType,optional" db:"operator_type"`
+	OperName      string `json:"operName,optional" db:"oper_name"`
+	DeptName      string `json:"deptName,optional" db:"dept_name"`
+	OperUrl       string `json:"operUrl,optional" db:"oper_url"`
+	OperIp        string `json:"operIp,optional" db:"oper_ip"`
+	OperLocation  string `json:"operLocation,optional" db:"oper_location"`
+	OperParam     string `json:"operParam,optional" db:"oper_param"`
+	JsonResult    string `json:"jsonResult,optional" db:"json_result"`
+	Status        int64  `json:"status,optional" db:"status"`
+	ErrorMsg      string `json:"errorMsg,optional" db:"error_msg"`
+	OperTime      string `json:"operTime,optional" db:"oper_time"`
+	CostTime      int64  `json:"costTime,optional" db:"cost_time"`
+}
+
+type ParameterEntry struct {
+	ConfigId    int64  `json:"configId,optional" db:"config_id"`
+	ConfigName  string `json:"configName,optional" db:"config_name"`
+	ConfigKey   string `json:"configKey,optional" db:"config_key"`
+	ConfigValue string `json:"configValue,optional" db:"config_value"`
+	ConfigType  string `json:"configType,optional" db:"config_type"`
+	CreateBy    string `json:"createBy,optional" db:"create_by"`
+	CreateTime  string `json:"createTime,optional" db:"create_time"`
+	UpdateBy    string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime  string `json:"updateTime,optional" db:"update_time"`
+	Remark      string `json:"remark,optional" db:"remark"`
+}
+
+type DeptRecord struct {
+	DeptId     int64  `json:"deptId,optional" db:"dept_id"`
+	ParentId   int64  `json:"parentId,optional" db:"parent_id"`
+	DeptName   string `json:"deptName,optional" db:"dept_name" validate:"omitempty,max=30"`
+	OrderNum   int    `json:"orderNum,optional" db:"order_num"`
+	Ancestors  string `json:"ancestors,optional" db:"ancestors"`
+	Leader     string `json:"leader,optional" db:"leader" validate:"omitempty,max=20"`
+	Phone      string `json:"phone,optional" db:"phone" validate:"omitempty,max=11"`
+	Email      string `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type DeptResult struct {
+	StatusResponse
+	Data DeptRecord `json:"data"`
+}
+
+type DeptList struct {
+	StatusResponse
+	Data []DeptRecord `json:"data"`
+}
+
+type DictTypeEntry struct {
+	DictId     int64  `json:"dictId,optional" db:"dict_id"`
+	DictName   string `json:"dictName,optional" db:"dict_name"`
+	DictType   string `json:"dictType,optional" db:"dict_type"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateBy   string `json:"createBy,optional" db:"create_by"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+	UpdateBy   string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime string `json:"updateTime,optional" db:"update_time"`
+	Remark     string `json:"remark,optional" db:"remark"`
+}
+
+type DictEntryEntry struct {
+	DictCode   int64  `json:"dictCode,optional" db:"dict_code"`
+	DictSort   int64  `json:"dictSort,optional" db:"dict_sort"`
+	DictLabel  string `json:"dictLabel,optional" db:"dict_label"`
+	DictValue  string `json:"dictValue,optional" db:"dict_value"`
+	DictType   string `json:"dictType,optional" db:"dict_type"`
+	CssClass   string `json:"cssClass,optional" db:"css_class"`
+	ListClass  string `json:"listClass,optional" db:"list_class"`
+	IsDefault  string `json:"isDefault,optional" db:"is_default"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateBy   string `json:"createBy,optional" db:"create_by"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+	UpdateBy   string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime string `json:"updateTime,optional" db:"update_time"`
+	Remark     string `json:"remark,optional" db:"remark"`
+}
+
+type DictRecord struct {
+	DictCode  int64  `json:"dictCode,optional" db:"dict_code"`
+	DictSort  int    `json:"dictSort,optional" db:"dict_sort"`
+	DictLabel string `json:"dictLabel,optional" db:"dict_label"`
+	DictValue string `json:"dictValue,optional" db:"dict_value"`
+	DictType  string `json:"dictType,optional" db:"dict_type"`
+	CssClass  string `json:"cssClass,optional" db:"css_class"`
+	ListClass string `json:"listClass,optional" db:"list_class"`
+	IsDefault string `json:"isDefault,optional" db:"is_default"`
+	Status    string `json:"status,optional" db:"status"`
+}
+
+type DictResult struct {
+	StatusResponse
+	Data []DictRecord `json:"data"`
+}
+
+type MenuRecord struct {
+	MenuId     int64  `json:"menuId,optional" db:"menu_id"`
+	ParentId   int64  `json:"parentId,optional" db:"parent_id"`
+	MenuName   string `json:"menuName,optional" db:"menu_name" validate:"omitempty,max=50"`
+	OrderNum   int    `json:"orderNum,optional" db:"order_num"`
+	Path       string `json:"path,optional" db:"path" validate:"omitempty,max=200"`
+	Component  string `json:"component,optional" db:"component" validate:"omitempty,max=255"`
+	Query      string `json:"query,optional" db:"route_query" validate:"omitempty,max=255"`
+	RouteName  string `json:"routeName,optional" db:"route_name" validate:"omitempty,max=50"`
+	IsFrame    string `json:"isFrame,optional" db:"is_frame"`
+	IsCache    string `json:"isCache,optional" db:"is_cache"`
+	MenuType   string `json:"menuType,optional" db:"menu_type"`
+	Visible    string `json:"visible,optional" db:"visible"`
+	Status     string `json:"status,optional" db:"status"`
+	Perms      string `json:"perms,optional" db:"perms" validate:"omitempty,max=100"`
+	Icon       string `json:"icon,optional" db:"icon" validate:"omitempty,max=100"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type MenuTreeResult struct {
+	StatusResponse
+	Menus       []TreeNode `json:"menus"`
+	CheckedKeys []int64    `json:"checkedKeys"`
+}
+
+type MenuResult struct {
+	StatusResponse
+	Data MenuRecord `json:"data"`
+}
+
+type MenuList struct {
+	StatusResponse
+	Data []MenuRecord `json:"data"`
+}
+
+type BulletinEntry struct {
+	NoticeId      int64  `json:"noticeId,optional" db:"notice_id"`
+	NoticeTitle   string `json:"noticeTitle,optional" db:"notice_title"`
+	NoticeType    string `json:"noticeType,optional" db:"notice_type"`
+	NoticeContent string `json:"noticeContent,optional" db:"notice_content"`
+	Status        string `json:"status,optional" db:"status"`
+	CreateBy      string `json:"createBy,optional" db:"create_by"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+	UpdateBy      string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime    string `json:"updateTime,optional" db:"update_time"`
+	Remark        string `json:"remark,optional" db:"remark"`
+}
+
+type Notice struct {
+	NoticeId      int64  `json:"noticeId" db:"notice_id"`
+	NoticeTitle   string `json:"noticeTitle" db:"notice_title"`
+	NoticeType    string `json:"noticeType" db:"notice_type"`
+	NoticeContent string `json:"noticeContent,omitempty" db:"notice_content"`
+	CreateBy      string `json:"createBy" db:"create_by"`
+	CreateTime    string `json:"createTime" db:"create_time"`
+	IsRead        bool   `json:"isRead" db:"is_read"`
+}
+
+type NoticeList struct {
+	StatusResponse
+	Data        []Notice `json:"data"`
+	UnreadCount int      `json:"unreadCount"`
+}
+
+type NoticeDetail struct {
+	StatusResponse
+	Data Notice `json:"data"`
+}
+
+type ReadNoticeRequest struct {
+	NoticeId int64 `form:"noticeId"`
+}
+
+type ReadNoticesRequest struct {
+	Ids string `form:"ids"`
+}
+
+type PostRecord struct {
+	PostId     int64  `json:"postId,optional" db:"post_id"`
+	PostCode   string `json:"postCode,optional" db:"post_code" validate:"omitempty,max=64"`
+	PostName   string `json:"postName,optional" db:"post_name" validate:"omitempty,max=50"`
+	PostSort   int    `json:"postSort,optional" db:"post_sort"`
+	Status     string `json:"status,optional" db:"status"`
+	Remark     string `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type PostResult struct {
+	StatusResponse
+	Data PostRecord `json:"data"`
+}
+
+type PostList struct {
+	StatusResponse
+	Rows  []PostRecord `json:"rows"`
+	Total int64        `json:"total"`
+}
+
+type ProfileInput struct {
+	NickName    string `json:"nickName,optional" db:"nick_name" validate:"omitempty,max=30"`
+	Email       string `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Phonenumber string `json:"phonenumber,optional" db:"phonenumber" validate:"omitempty,max=11"`
+	Sex         string `json:"sex,optional" db:"sex"`
+}
+
+type PasswordInput struct {
+	OldPassword string `json:"oldPassword,optional" db:"old_password"`
+	NewPassword string `json:"newPassword,optional" db:"new_password"`
+}
+
+type ProfileResult struct {
+	StatusResponse
+	Data      UserProfile `json:"data"`
+	RoleGroup string      `json:"roleGroup"`
+	PostGroup string      `json:"postGroup"`
+}
+
+type AvatarResult struct {
+	StatusResponse
+	ImgUrl string `json:"imgUrl"`
+}
+
+type MemberAssignment struct {
+	RoleId  int64  `form:"roleId,optional" db:"role_id"`
+	UserIds string `form:"userIds,optional" db:"user_ids"`
+}
+
+type MemberRemoval struct {
+	RoleId int64 `json:"roleId,optional" db:"role_id"`
+	UserId int64 `json:"userId,optional" db:"user_id"`
+}
+
+type RoleRecord struct {
+	RoleId            int64   `json:"roleId,optional" db:"role_id"`
+	RoleName          string  `json:"roleName,optional" db:"role_name" validate:"omitempty,max=30"`
+	RoleKey           string  `json:"roleKey,optional" db:"role_key" validate:"omitempty,max=100"`
+	RoleSort          int     `json:"roleSort,optional" db:"role_sort"`
+	DataScope         string  `json:"dataScope,optional" db:"data_scope"`
+	Status            string  `json:"status,optional" db:"status"`
+	Remark            string  `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	MenuCheckStrictly bool    `json:"menuCheckStrictly,optional" db:"menu_check_strictly"`
+	DeptCheckStrictly bool    `json:"deptCheckStrictly,optional" db:"dept_check_strictly"`
+	CreateTime        string  `json:"createTime,optional" db:"create_time"`
+	Flag              bool    `json:"flag,optional" db:"flag"`
+	Admin             bool    `json:"admin,optional" db:"admin"`
+	MenuIds           []int64 `json:"menuIds,optional" db:"menu_ids"`
+	DeptIds           []int64 `json:"deptIds,optional" db:"dept_ids"`
+}
+
+type DeptTreeResult struct {
+	StatusResponse
+	Depts       []TreeNode `json:"depts"`
+	CheckedKeys []int64    `json:"checkedKeys"`
+}
+
+type RoleResult struct {
+	StatusResponse
+	Data RoleRecord `json:"data"`
+}
+
+type RoleList struct {
+	StatusResponse
+	Rows  []RoleRecord `json:"rows"`
+	Total int64        `json:"total"`
+}
+
+type UserInput struct {
+	UserId      int64   `json:"userId,optional" db:"user_id"`
+	UserName    string  `json:"userName,optional" db:"user_name" validate:"omitempty,max=30"`
+	NickName    string  `json:"nickName,optional" db:"nick_name" validate:"omitempty,max=30"`
+	Password    string  `json:"password,optional" db:"password"`
+	DeptId      *int64  `json:"deptId,optional" db:"dept_id"`
+	Email       string  `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Phonenumber string  `json:"phonenumber,optional" db:"phonenumber" validate:"omitempty,max=11"`
+	Sex         string  `json:"sex,optional" db:"sex"`
+	Status      string  `json:"status,optional" db:"status"`
+	Remark      string  `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	RoleIds     []int64 `json:"roleIds,optional" db:"role_ids"`
+	PostIds     []int64 `json:"postIds,optional" db:"post_ids"`
+}
+
+type RoleAssignment struct {
+	UserId  int64  `form:"userId,optional" db:"user_id"`
+	RoleIds string `form:"roleIds,optional" db:"role_ids"`
+}
+
+type UserStatus struct {
+	UserId int64  `json:"userId,optional" db:"user_id"`
+	Status string `json:"status,optional" db:"status"`
+}
+
+type UserPassword struct {
+	UserId   int64  `json:"userId,optional" db:"user_id"`
+	Password string `json:"password,optional" db:"password"`
+}
+
+type UserPage struct {
+	StatusResponse
+	Rows  []UserProfile `json:"rows"`
+	Total int64         `json:"total"`
+}
+
+type UserDetail struct {
+	StatusResponse
+	Data    *UserProfile `json:"data"`
+	Roles   []RoleRecord `json:"roles"`
+	Posts   []PostRecord `json:"posts"`
+	RoleIds []int64      `json:"roleIds"`
+	PostIds []int64      `json:"postIds"`
+}
+
+type UserGrants struct {
+	StatusResponse
+	User  UserProfile  `json:"user"`
+	Roles []RoleRecord `json:"roles"`
+}
+
+type DemoUser struct {
+	UserId   int64  `json:"userId,optional" form:"userId,optional" db:"user_id"`
+	Username string `json:"username,optional" form:"username,optional" db:"username"`
+	Password string `json:"password,optional" form:"password,optional" db:"password"`
+	Mobile   string `json:"mobile,optional" form:"mobile,optional" db:"mobile"`
+}
+
+type DownloadForm struct {
+	FileName string `form:"fileName,optional" db:"file_name"`
+	Resource string `form:"resource,optional" db:"resource"`
+	Delete   bool   `form:"delete,optional" db:"delete"`
+}
+
+type UploadResult struct {
+	Msg               string `json:"msg,optional" db:"msg"`
+	Url               string `json:"url,optional" db:"url"`
+	FileName          string `json:"fileName,optional" db:"file_name"`
+	NewFileName       string `json:"newFileName,optional" db:"new_file_name"`
+	OriginalFilename  string `json:"originalFilename,optional" db:"original_filename"`
+	Urls              string `json:"urls,optional" db:"urls"`
+	FileNames         string `json:"fileNames,optional" db:"file_names"`
+	NewFileNames      string `json:"newFileNames,optional" db:"new_file_names"`
+	OriginalFilenames string `json:"originalFilenames,optional" db:"original_filenames"`
+	Code              int    `json:"code,optional" db:"code"`
+}
+
+type TablesForm struct {
+	Tables string `form:"tables,optional" db:"tables"`
+}
+
+type DDLForm struct {
+	Sql string `form:"sql,optional" db:"sql"`
+}
+
+type GenColumn struct {
+	ColumnId      int64  `json:"columnId,optional" db:"column_id"`
+	TableId       int64  `json:"tableId,optional" db:"table_id"`
+	ColumnName    string `json:"columnName,optional" db:"column_name"`
+	ColumnComment string `json:"columnComment,optional" db:"column_comment"`
+	ColumnType    string `json:"columnType,optional" db:"column_type"`
+	JavaType      string `json:"javaType,optional" db:"java_type"`
+	JavaField     string `json:"javaField,optional" db:"java_field"`
+	IsPk          string `json:"isPk,optional" db:"is_pk"`
+	IsIncrement   string `json:"isIncrement,optional" db:"is_increment"`
+	IsRequired    string `json:"isRequired,optional" db:"is_required"`
+	IsInsert      string `json:"isInsert,optional" db:"is_insert"`
+	IsEdit        string `json:"isEdit,optional" db:"is_edit"`
+	IsList        string `json:"isList,optional" db:"is_list"`
+	IsQuery       string `json:"isQuery,optional" db:"is_query"`
+	QueryType     string `json:"queryType,optional" db:"query_type"`
+	HtmlType      string `json:"htmlType,optional" db:"html_type"`
+	DictType      string `json:"dictType,optional" db:"dict_type"`
+	Sort          int64  `json:"sort,optional" db:"sort"`
+	CreateBy      string `json:"createBy,optional" db:"create_by"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+	UpdateBy      string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime    string `json:"updateTime,optional" db:"update_time"`
+}
+
+type GenTable struct {
+	TableId        int64                  `json:"tableId,optional" db:"table_id"`
+	TableName      string                 `json:"tableName,optional" db:"table_name"`
+	TableComment   string                 `json:"tableComment,optional" db:"table_comment"`
+	SubTableName   string                 `json:"subTableName,optional" db:"sub_table_name"`
+	SubTableFkName string                 `json:"subTableFkName,optional" db:"sub_table_fk_name"`
+	ClassName      string                 `json:"className,optional" db:"class_name"`
+	TplCategory    string                 `json:"tplCategory,optional" db:"tpl_category"`
+	TplWebType     string                 `json:"tplWebType,optional" db:"tpl_web_type"`
+	PackageName    string                 `json:"packageName,optional" db:"package_name"`
+	ModuleName     string                 `json:"moduleName,optional" db:"module_name"`
+	BusinessName   string                 `json:"businessName,optional" db:"business_name"`
+	FunctionName   string                 `json:"functionName,optional" db:"function_name"`
+	FunctionAuthor string                 `json:"functionAuthor,optional" db:"function_author"`
+	GenType        string                 `json:"genType,optional" db:"gen_type"`
+	GenPath        string                 `json:"genPath,optional" db:"gen_path"`
+	Options        string                 `json:"options,optional" db:"options"`
+	CreateBy       string                 `json:"createBy,optional" db:"create_by"`
+	CreateTime     string                 `json:"createTime,optional" db:"create_time"`
+	UpdateBy       string                 `json:"updateBy,optional" db:"update_by"`
+	UpdateTime     string                 `json:"updateTime,optional" db:"update_time"`
+	Remark         string                 `json:"remark,optional" db:"remark"`
+	Columns        []GenColumn            `json:"columns,optional" db:"columns"`
+	Params         map[string]interface{} `json:"params,optional" db:"params"`
+	TreeCode       string                 `json:"treeCode,optional" db:"tree_code"`
+	TreeName       string                 `json:"treeName,optional" db:"tree_name"`
+	TreeParentCode string                 `json:"treeParentCode,optional" db:"tree_parent_code"`
+	ParentMenuId   interface{}            `json:"parentMenuId,optional" db:"parent_menu_id"`
 }

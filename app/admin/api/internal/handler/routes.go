@@ -6,7 +6,28 @@ package handler
 import (
 	"net/http"
 
-	"github.com/kiritokun07/ruoyi-vue-go-zero/app/admin/api/internal/svc"
+	auth "ruoyi-vue-go-zero/app/admin/api/internal/handler/auth"
+	cache "ruoyi-vue-go-zero/app/admin/api/internal/handler/cache"
+	config "ruoyi-vue-go-zero/app/admin/api/internal/handler/config"
+	demo "ruoyi-vue-go-zero/app/admin/api/internal/handler/demo"
+	dept "ruoyi-vue-go-zero/app/admin/api/internal/handler/dept"
+	dict "ruoyi-vue-go-zero/app/admin/api/internal/handler/dict"
+	file "ruoyi-vue-go-zero/app/admin/api/internal/handler/file"
+	gen "ruoyi-vue-go-zero/app/admin/api/internal/handler/gen"
+	job "ruoyi-vue-go-zero/app/admin/api/internal/handler/job"
+	job_log "ruoyi-vue-go-zero/app/admin/api/internal/handler/job_log"
+	login_log "ruoyi-vue-go-zero/app/admin/api/internal/handler/login_log"
+	menu "ruoyi-vue-go-zero/app/admin/api/internal/handler/menu"
+	notice "ruoyi-vue-go-zero/app/admin/api/internal/handler/notice"
+	online "ruoyi-vue-go-zero/app/admin/api/internal/handler/online"
+	operation_log "ruoyi-vue-go-zero/app/admin/api/internal/handler/operation_log"
+	post "ruoyi-vue-go-zero/app/admin/api/internal/handler/post"
+	profile "ruoyi-vue-go-zero/app/admin/api/internal/handler/profile"
+	public "ruoyi-vue-go-zero/app/admin/api/internal/handler/public"
+	role "ruoyi-vue-go-zero/app/admin/api/internal/handler/role"
+	serverinfo "ruoyi-vue-go-zero/app/admin/api/internal/handler/serverinfo"
+	users "ruoyi-vue-go-zero/app/admin/api/internal/handler/users"
+	"ruoyi-vue-go-zero/app/admin/api/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -17,13 +38,998 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			{
 				Method:  http.MethodGet,
 				Path:    "/captchaImage",
-				Handler: CaptchaImageHandler(serverCtx),
+				Handler: auth.CaptchaImageHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: auth.LogoutHandler(serverCtx),
 			},
 			{
 				Method:  http.MethodPost,
 				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
+				Handler: auth.LoginHandler(serverCtx),
 			},
 		},
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/getInfo",
+					Handler: auth.GetInfoHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/getRouters",
+					Handler: auth.GetRoutersHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/register",
+				Handler: auth.RegisterHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/cache",
+					Handler: cache.CacheInfoHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/cache/getNames",
+					Handler: cache.CacheNamesHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/cache/getKeys/:key",
+					Handler: cache.CacheKeysHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/cache/getValue/:name/:key",
+					Handler: cache.CacheValueHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/cache/clearCacheName/:key",
+					Handler: cache.ClearCacheNameHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/cache/clearCacheKey/:key",
+					Handler: cache.ClearCacheKeyHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/cache/clearCacheAll",
+					Handler: cache.ClearCachesHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/job/list",
+					Handler: job.ListScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/job/:id",
+					Handler: job.GetScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/job",
+					Handler: job.CreateScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/monitor/job",
+					Handler: job.EditScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/job/:ids",
+					Handler: job.DeleteScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/job/export",
+					Handler: job.ExportScheduleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/monitor/job/changeStatus",
+					Handler: job.JobStatusHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/monitor/job/run",
+					Handler: job.RunJobHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/jobLog/list",
+					Handler: job_log.ListJobLogHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/jobLog/:id",
+					Handler: job_log.GetJobLogHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/jobLog/:ids",
+					Handler: job_log.DeleteJobLogHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/jobLog/clean",
+					Handler: job_log.CleanJobLogHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/jobLog/export",
+					Handler: job_log.ExportJobLogHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/logininfor/list",
+					Handler: login_log.ListLoginEventHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/logininfor/:ids",
+					Handler: login_log.DeleteLoginEventHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/logininfor/clean",
+					Handler: login_log.CleanLoginEventHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/logininfor/export",
+					Handler: login_log.ExportLoginEventHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/logininfor/unlock/:key",
+					Handler: login_log.UnlockLoginHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/online/list",
+					Handler: online.OnlineUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/online/:key",
+					Handler: online.ForceLogoutHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/operlog/list",
+					Handler: operation_log.ListOperationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/operlog/:ids",
+					Handler: operation_log.DeleteOperationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/monitor/operlog/clean",
+					Handler: operation_log.CleanOperationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/monitor/operlog/export",
+					Handler: operation_log.ExportOperationHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/monitor/server",
+					Handler: serverinfo.ServerInfoHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/",
+				Handler: public.WelcomeHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/config/list",
+					Handler: config.ListParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/config/:id",
+					Handler: config.GetParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/config",
+					Handler: config.CreateParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/system/config",
+					Handler: config.EditParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/config/:ids",
+					Handler: config.DeleteParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/config/export",
+					Handler: config.ExportParameterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/config/refreshCache",
+					Handler: config.RefreshConfigHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/config/configKey/:key",
+					Handler: config.ConfigValueHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/dept/list",
+					Handler: dept.ListDeptHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/dept/:id",
+					Handler: dept.GetDeptHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/dept",
+					Handler: dept.CreateDeptHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/dept",
+					Handler: dept.EditDeptHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/dept/:ids",
+					Handler: dept.DeleteDeptHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/dept/list/exclude/:id",
+					Handler: dept.ExcludeDepartmentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/dept/updateSort",
+					Handler: dept.SortDepartmentsHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/dict/type/list",
+					Handler: dict.ListDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/dict/type/:id",
+					Handler: dict.GetDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/type",
+					Handler: dict.CreateDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/system/dict/type",
+					Handler: dict.EditDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/dict/type/:ids",
+					Handler: dict.DeleteDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/type/export",
+					Handler: dict.ExportDictTypeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/dict/data/list",
+					Handler: dict.ListDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/dict/data/:id",
+					Handler: dict.GetDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/data",
+					Handler: dict.CreateDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/system/dict/data",
+					Handler: dict.EditDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/dict/data/:ids",
+					Handler: dict.DeleteDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/dict/data/export",
+					Handler: dict.ExportDictEntryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/dict/type/optionselect",
+					Handler: dict.DictOptionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/dict/type/refreshCache",
+					Handler: dict.RefreshDictionaryHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/dict/data/type/:key",
+					Handler: dict.DictionaryHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/menu/list",
+					Handler: menu.ListMenuHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/menu/:id",
+					Handler: menu.GetMenuHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/menu",
+					Handler: menu.CreateMenuHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/menu",
+					Handler: menu.EditMenuHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/menu/:ids",
+					Handler: menu.DeleteMenuHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/menu/treeselect",
+					Handler: menu.MenuTreeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/menu/roleMenuTreeselect/:id",
+					Handler: menu.RoleMenuTreeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/menu/updateSort",
+					Handler: menu.SortMenusHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/notice/list",
+					Handler: notice.ListBulletinHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/notice",
+					Handler: notice.CreateBulletinHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/system/notice",
+					Handler: notice.EditBulletinHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/system/notice/:ids",
+					Handler: notice.DeleteBulletinHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/notice/readUsers/list",
+					Handler: notice.ReadUsersHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/listTop",
+					Handler: notice.HeaderNoticesHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/:id",
+					Handler: notice.NoticeDetailHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/markRead",
+					Handler: notice.MarkNoticeReadHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/markReadAll",
+					Handler: notice.MarkNoticesReadHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system/notice"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/post/optionselect",
+					Handler: post.PostOptionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/post/export",
+					Handler: post.ExportPostsHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/post/list",
+					Handler: post.ListPostHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/post/:id",
+					Handler: post.GetPostHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/post",
+					Handler: post.CreatePostHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/post",
+					Handler: post.EditPostHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/post/:ids",
+					Handler: post.DeletePostHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/user/profile",
+					Handler: profile.ProfileHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user/profile",
+					Handler: profile.SaveProfileHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user/profile/updatePwd",
+					Handler: profile.ChangePasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/user/profile/avatar",
+					Handler: profile.UploadAvatarHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+		rest.WithMaxBytes(6291456),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/system/role/optionselect",
+					Handler: role.RoleOptionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/role/export",
+					Handler: role.ExportRolesHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/role/list",
+					Handler: role.ListRoleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/role/:id",
+					Handler: role.GetRoleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/role",
+					Handler: role.CreateRoleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role",
+					Handler: role.EditRoleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/role/:ids",
+					Handler: role.DeleteRoleHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/role/deptTree/:id",
+					Handler: role.RoleDepartmentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role/dataScope",
+					Handler: role.RoleScopeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role/changeStatus",
+					Handler: role.RoleStatusHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/role/authUser/allocatedList",
+					Handler: role.AllocatedUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/role/authUser/unallocatedList",
+					Handler: role.UnallocatedUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role/authUser/cancel",
+					Handler: role.RemoveMemberHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role/authUser/cancelAll",
+					Handler: role.RemoveMembersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/role/authUser/selectAll",
+					Handler: role.AddMembersHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/user/export",
+					Handler: users.ExportUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/user/importTemplate",
+					Handler: users.UserTemplateHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/system/user/importData",
+					Handler: users.ImportUsersHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithMaxBytes(33554432),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/user/list",
+					Handler: users.ListUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/user/deptTree",
+					Handler: users.UserDepartmentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/user",
+					Handler: users.UserOptionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/user/:id",
+					Handler: users.UserDetailHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/user",
+					Handler: users.CreateUserHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user",
+					Handler: users.EditUserHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/user/:ids",
+					Handler: users.DeleteUsersHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user/changeStatus",
+					Handler: users.ChangeUserStatusHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user/resetPwd",
+					Handler: users.ResetPasswordHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/user/authRole/:id",
+					Handler: users.UserGrantsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/user/authRole",
+					Handler: users.AssignRolesHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/system"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/test/user/list",
+					Handler: demo.DemoListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/test/user/:id",
+					Handler: demo.DemoGetHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/test/user/save",
+					Handler: demo.DemoSaveHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/test/user/update",
+					Handler: demo.DemoEditHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/test/user/:id",
+					Handler: demo.DemoRemoveHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/common/download",
+					Handler: file.DownloadFileHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/common/download/resource",
+					Handler: file.DownloadResourceHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/common/upload",
+					Handler: file.UploadFileHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/common/uploads",
+					Handler: file.UploadFilesHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithMaxBytes(33554432),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Session},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/list",
+					Handler: gen.GenListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/db/list",
+					Handler: gen.GenDatabaseHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/:id",
+					Handler: gen.GenInfoHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/column/:id",
+					Handler: gen.GenColumnsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/tool/gen/importTable",
+					Handler: gen.GenImportHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/tool/gen/createTable",
+					Handler: gen.GenCreateHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/tool/gen",
+					Handler: gen.GenEditHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/tool/gen/:ids",
+					Handler: gen.GenDeleteHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/preview/:id",
+					Handler: gen.GenPreviewHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/download/:key",
+					Handler: gen.GenDownloadHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/genCode/:key",
+					Handler: gen.GenGenerateHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/synchDb/:key",
+					Handler: gen.GenSyncHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/tool/gen/batchGenCode",
+					Handler: gen.GenBatchHandler(serverCtx),
+				},
+			}...,
+		),
 	)
 }

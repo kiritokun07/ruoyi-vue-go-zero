@@ -1,0 +1,92 @@
+syntax = "v1"
+
+type DictTypeEntry {
+	DictId     int64  `json:"dictId,optional" db:"dict_id"`
+	DictName   string `json:"dictName,optional" db:"dict_name"`
+	DictType   string `json:"dictType,optional" db:"dict_type"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateBy   string `json:"createBy,optional" db:"create_by"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+	UpdateBy   string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime string `json:"updateTime,optional" db:"update_time"`
+	Remark     string `json:"remark,optional" db:"remark"`
+}
+
+type DictEntryEntry {
+	DictCode   int64  `json:"dictCode,optional" db:"dict_code"`
+	DictSort   int64  `json:"dictSort,optional" db:"dict_sort"`
+	DictLabel  string `json:"dictLabel,optional" db:"dict_label"`
+	DictValue  string `json:"dictValue,optional" db:"dict_value"`
+	DictType   string `json:"dictType,optional" db:"dict_type"`
+	CssClass   string `json:"cssClass,optional" db:"css_class"`
+	ListClass  string `json:"listClass,optional" db:"list_class"`
+	IsDefault  string `json:"isDefault,optional" db:"is_default"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateBy   string `json:"createBy,optional" db:"create_by"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+	UpdateBy   string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime string `json:"updateTime,optional" db:"update_time"`
+	Remark     string `json:"remark,optional" db:"remark"`
+}
+
+type DictRecord {
+	DictCode  int64  `json:"dictCode,optional" db:"dict_code"`
+	DictSort  int    `json:"dictSort,optional" db:"dict_sort"`
+	DictLabel string `json:"dictLabel,optional" db:"dict_label"`
+	DictValue string `json:"dictValue,optional" db:"dict_value"`
+	DictType  string `json:"dictType,optional" db:"dict_type"`
+	CssClass  string `json:"cssClass,optional" db:"css_class"`
+	ListClass string `json:"listClass,optional" db:"list_class"`
+	IsDefault string `json:"isDefault,optional" db:"is_default"`
+	Status    string `json:"status,optional" db:"status"`
+}
+
+type DictResult {
+	StatusResponse
+	Data []DictRecord `json:"data"`
+}
+
+@server (
+	group: dict
+	middleware: Session
+)
+service admin-api {
+	@handler ListDictType
+	get /system/dict/type/list (AdminFilter) returns (PageResult)
+	@handler GetDictType
+	get /system/dict/type/:id (RecordId) returns (Result)
+	@handler CreateDictType
+	post /system/dict/type (DictTypeEntry) returns (StatusResponse)
+	@handler EditDictType
+	put /system/dict/type (DictTypeEntry) returns (StatusResponse)
+	@handler DeleteDictType
+	delete /system/dict/type/:ids (RecordIds) returns (StatusResponse)
+	@handler ExportDictType
+	post /system/dict/type/export (AdminFilter)
+	@handler ListDictEntry
+	get /system/dict/data/list (AdminFilter) returns (PageResult)
+	@handler GetDictEntry
+	get /system/dict/data/:id (RecordId) returns (Result)
+	@handler CreateDictEntry
+	post /system/dict/data (DictEntryEntry) returns (StatusResponse)
+	@handler EditDictEntry
+	put /system/dict/data (DictEntryEntry) returns (StatusResponse)
+	@handler DeleteDictEntry
+	delete /system/dict/data/:ids (RecordIds) returns (StatusResponse)
+	@handler ExportDictEntry
+	post /system/dict/data/export (AdminFilter)
+	@handler DictOptions
+	get /system/dict/type/optionselect returns (Result)
+	@handler RefreshDictionary
+	delete /system/dict/type/refreshCache returns (StatusResponse)
+}
+
+@server (
+	group: dict
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler Dictionary
+	get /dict/data/type/:key (LookupKey) returns (DictResult)
+}

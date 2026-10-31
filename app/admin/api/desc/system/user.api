@@ -1,0 +1,103 @@
+syntax = "v1"
+
+type UserInput {
+	UserId      int64   `json:"userId,optional" db:"user_id"`
+	UserName    string  `json:"userName,optional" db:"user_name" validate:"omitempty,max=30"`
+	NickName    string  `json:"nickName,optional" db:"nick_name" validate:"omitempty,max=30"`
+	Password    string  `json:"password,optional" db:"password"`
+	DeptId      *int64  `json:"deptId,optional" db:"dept_id"`
+	Email       string  `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Phonenumber string  `json:"phonenumber,optional" db:"phonenumber" validate:"omitempty,max=11"`
+	Sex         string  `json:"sex,optional" db:"sex"`
+	Status      string  `json:"status,optional" db:"status"`
+	Remark      string  `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	RoleIds     []int64 `json:"roleIds,optional" db:"role_ids"`
+	PostIds     []int64 `json:"postIds,optional" db:"post_ids"`
+}
+
+type RoleAssignment {
+	UserId  int64  `form:"userId,optional" db:"user_id"`
+	RoleIds string `form:"roleIds,optional" db:"role_ids"`
+}
+
+type UserStatus {
+	UserId int64  `json:"userId,optional" db:"user_id"`
+	Status string `json:"status,optional" db:"status"`
+}
+
+type UserPassword {
+	UserId   int64  `json:"userId,optional" db:"user_id"`
+	Password string `json:"password,optional" db:"password"`
+}
+
+type UserPage {
+	StatusResponse
+	Rows  []UserProfile `json:"rows"`
+	Total int64         `json:"total"`
+}
+
+type UserDetail {
+	StatusResponse
+	Data    *UserProfile `json:"data"`
+	Roles   []RoleRecord `json:"roles"`
+	Posts   []PostRecord `json:"posts"`
+	RoleIds []int64      `json:"roleIds"`
+	PostIds []int64      `json:"postIds"`
+}
+
+type UserGrants {
+	StatusResponse
+	User  UserProfile  `json:"user"`
+	Roles []RoleRecord `json:"roles"`
+}
+
+@server (
+	group: users
+	middleware: Session
+)
+service admin-api {
+	@handler ExportUsers
+	post /system/user/export (ListFilter)
+	@handler UserTemplate
+	post /system/user/importTemplate
+}
+
+@server (
+	group: users
+	middleware: Session
+	maxBytes: 33554432
+)
+service admin-api {
+	@handler ImportUsers
+	post /system/user/importData returns (Result)
+}
+
+@server (
+	group: users
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ListUsers
+	get /user/list (ListFilter) returns (UserPage)
+	@handler UserDepartments
+	get /user/deptTree returns (TreeResult)
+	@handler UserOptions
+	get /user returns (UserDetail)
+	@handler UserDetail
+	get /user/:id (RecordId) returns (UserDetail)
+	@handler CreateUser
+	post /user (UserInput) returns (StatusResponse)
+	@handler EditUser
+	put /user (UserInput) returns (StatusResponse)
+	@handler DeleteUsers
+	delete /user/:ids (RecordIds) returns (StatusResponse)
+	@handler ChangeUserStatus
+	put /user/changeStatus (UserStatus) returns (StatusResponse)
+	@handler ResetPassword
+	put /user/resetPwd (UserPassword) returns (StatusResponse)
+	@handler UserGrants
+	get /user/authRole/:id (RecordId) returns (UserGrants)
+	@handler AssignRoles
+	put /user/authRole (RoleAssignment) returns (StatusResponse)
+}

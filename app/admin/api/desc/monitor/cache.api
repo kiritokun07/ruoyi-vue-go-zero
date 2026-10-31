@@ -1,0 +1,27 @@
+syntax = "v1"
+
+type KeyPair {
+	Name string `path:"name" db:"name"`
+	Key  string `path:"key" db:"key"`
+}
+
+@server (
+	group: cache
+	middleware: Session
+)
+service admin-api {
+	@handler CacheInfo
+	get /monitor/cache returns (Result)
+	@handler CacheNames
+	get /monitor/cache/getNames returns (Result)
+	@handler CacheKeys
+	get /monitor/cache/getKeys/:key (LookupKey) returns (Result)
+	@handler CacheValue
+	get /monitor/cache/getValue/:name/:key (KeyPair) returns (Result)
+	@handler ClearCacheName
+	delete /monitor/cache/clearCacheName/:key (LookupKey) returns (StatusResponse)
+	@handler ClearCacheKey
+	delete /monitor/cache/clearCacheKey/:key (LookupKey) returns (StatusResponse)
+	@handler ClearCaches
+	delete /monitor/cache/clearCacheAll returns (StatusResponse)
+}

@@ -8,13 +8,19 @@ import (
 	bc "github.com/mojocn/base64Captcha"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/rest"
 
-	"github.com/kiritokun07/ruoyi-vue-go-zero/app/admin/api/internal/captcha"
-	"github.com/kiritokun07/ruoyi-vue-go-zero/app/admin/api/internal/config"
-	"github.com/kiritokun07/ruoyi-vue-go-zero/app/admin/api/internal/model"
+	"ruoyi-vue-go-zero/app/admin/api/internal/captcha"
+	"ruoyi-vue-go-zero/app/admin/api/internal/config"
+	"ruoyi-vue-go-zero/app/admin/api/internal/middleware"
+	"ruoyi-vue-go-zero/app/admin/api/internal/model"
 )
 
 type ServiceContext struct {
+	Session   rest.Middleware
+	Admin     *model.AdminModel
+	Access    *model.AccessModel
+	DB        sqlx.SqlConn
 	Config    config.Config
 	Users     model.SysUserModel
 	Settings  model.SysConfigModel
@@ -26,12 +32,18 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	conn := sqlx.NewMysql(c.MySQLDSN)
+	cache := redis.MustNewRedis(c.Redis)
+	access := model.NewAccessModel(conn)
 	return &ServiceContext{
+		Session:   middleware.NewSessionMiddleware(c.Auth.AccessSecret, cache, access.ActiveIdentity).Handle,
+		Access:    access,
+		Admin:     model.NewAdminModel(conn),
+		DB:        conn,
 		Config:    c,
 		Users:     model.NewSysUserModel(conn),
 		Settings:  model.NewSysConfigModel(conn),
 		LoginLog:  model.NewSysLogininforModel(conn),
-		Redis:     redis.MustNewRedis(c.Redis),
+		Redis:     cache,
 		Validator: validator.New(),
 		Captcha:   captcha.NewDriver(c.Auth.CaptchaType),
 	}

@@ -1,0 +1,43 @@
+syntax = "v1"
+
+type DownloadForm {
+	FileName string `form:"fileName,optional" db:"file_name"`
+	Resource string `form:"resource,optional" db:"resource"`
+	Delete   bool   `form:"delete,optional" db:"delete"`
+}
+
+type UploadResult {
+	Msg               string `json:"msg,optional" db:"msg"`
+	Url               string `json:"url,optional" db:"url"`
+	FileName          string `json:"fileName,optional" db:"file_name"`
+	NewFileName       string `json:"newFileName,optional" db:"new_file_name"`
+	OriginalFilename  string `json:"originalFilename,optional" db:"original_filename"`
+	Urls              string `json:"urls,optional" db:"urls"`
+	FileNames         string `json:"fileNames,optional" db:"file_names"`
+	NewFileNames      string `json:"newFileNames,optional" db:"new_file_names"`
+	OriginalFilenames string `json:"originalFilenames,optional" db:"original_filenames"`
+	Code              int    `json:"code,optional" db:"code"`
+}
+
+@server (
+	group: file
+	middleware: Session
+)
+service admin-api {
+	@handler DownloadFile
+	get /common/download (DownloadForm)
+	@handler DownloadResource
+	get /common/download/resource (DownloadForm)
+}
+
+@server (
+	group: file
+	middleware: Session
+	maxBytes: 33554432
+)
+service admin-api {
+	@handler UploadFile
+	post /common/upload returns (UploadResult)
+	@handler UploadFiles
+	post /common/uploads returns (UploadResult)
+}

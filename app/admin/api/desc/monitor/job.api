@@ -1,0 +1,41 @@
+syntax = "v1"
+
+type ScheduleEntry {
+	NextValidTime  string `json:"nextValidTime,optional,omitempty" db:"-"`
+	JobId          int64  `json:"jobId,optional" db:"job_id"`
+	JobName        string `json:"jobName,optional" db:"job_name"`
+	JobGroup       string `json:"jobGroup,optional" db:"job_group"`
+	InvokeTarget   string `json:"invokeTarget,optional" db:"invoke_target"`
+	CronExpression string `json:"cronExpression,optional" db:"cron_expression"`
+	MisfirePolicy  string `json:"misfirePolicy,optional" db:"misfire_policy"`
+	Concurrent     string `json:"concurrent,optional" db:"concurrent"`
+	Status         string `json:"status,optional" db:"status"`
+	CreateBy       string `json:"createBy,optional" db:"create_by"`
+	CreateTime     string `json:"createTime,optional" db:"create_time"`
+	UpdateBy       string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime     string `json:"updateTime,optional" db:"update_time"`
+	Remark         string `json:"remark,optional" db:"remark"`
+}
+
+@server (
+	group: job
+	middleware: Session
+)
+service admin-api {
+	@handler ListSchedule
+	get /monitor/job/list (AdminFilter) returns (PageResult)
+	@handler GetSchedule
+	get /monitor/job/:id (RecordId) returns (Result)
+	@handler CreateSchedule
+	post /monitor/job (ScheduleEntry) returns (StatusResponse)
+	@handler EditSchedule
+	put /monitor/job (ScheduleEntry) returns (StatusResponse)
+	@handler DeleteSchedule
+	delete /monitor/job/:ids (RecordIds) returns (StatusResponse)
+	@handler ExportSchedule
+	post /monitor/job/export (AdminFilter)
+	@handler JobStatus
+	put /monitor/job/changeStatus (ScheduleEntry) returns (StatusResponse)
+	@handler RunJob
+	put /monitor/job/run (ScheduleEntry) returns (StatusResponse)
+}

@@ -1,0 +1,145 @@
+syntax = "v1"
+
+type StatusResponse {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+}
+
+type Department {
+		DeptId    int64  `json:"deptId" db:"dept_id"`
+		ParentId  int64  `json:"parentId" db:"parent_id"`
+		Ancestors string `json:"ancestors" db:"ancestors"`
+		DeptName  string `json:"deptName" db:"dept_name"`
+		OrderNum  int    `json:"orderNum" db:"order_num"`
+		Leader    string `json:"leader" db:"leader"`
+		Status    string `json:"status" db:"status"`
+}
+
+type Role {
+		RoleId      int64    `json:"roleId" db:"role_id"`
+		RoleName    string   `json:"roleName" db:"role_name"`
+		RoleKey     string   `json:"roleKey" db:"role_key"`
+		RoleSort    int      `json:"roleSort" db:"role_sort"`
+		DataScope   string   `json:"dataScope" db:"data_scope"`
+		Status      string   `json:"status" db:"status"`
+		Admin       bool     `json:"admin" db:"admin"`
+		Permissions []string `json:"permissions,omitempty" db:"-"`
+}
+
+type UserProfile {
+		UserId        int64       `json:"userId" db:"user_id"`
+		DeptId        *int64      `json:"deptId" db:"dept_id"`
+		UserName      string      `json:"userName" db:"user_name"`
+		NickName      string      `json:"nickName" db:"nick_name"`
+		Email         string      `json:"email" db:"email"`
+		Phonenumber   string      `json:"phonenumber" db:"phonenumber"`
+		Sex           string      `json:"sex" db:"sex"`
+		Avatar        string      `json:"avatar" db:"avatar"`
+		Status        string      `json:"status" db:"status"`
+		DelFlag       string      `json:"delFlag" db:"del_flag"`
+		LoginIp       string      `json:"loginIp" db:"login_ip"`
+		LoginDate     *string     `json:"loginDate" db:"login_date"`
+		PwdUpdateDate *string     `json:"pwdUpdateDate" db:"pwd_update_date"`
+		CreateBy      string      `json:"createBy" db:"create_by"`
+		CreateTime    *string     `json:"createTime" db:"create_time"`
+		Remark        string      `json:"remark" db:"remark"`
+		Admin         bool        `json:"admin" db:"admin"`
+		Dept          *Department `json:"dept" db:"-"`
+		Roles         []Role      `json:"roles" db:"-"`
+}
+
+type Result {
+	StatusResponse
+	Data interface{} `json:"data,omitempty"`
+}
+
+type PageResult {
+	StatusResponse
+	Rows  interface{} `json:"rows"`
+	Total int64       `json:"total"`
+}
+
+type AdminFilter {
+	OrderByColumn string `form:"orderByColumn,optional"`
+	IsAsc         string `form:"isAsc,optional"`
+	SearchValue   string `form:"searchValue,optional"`
+	ConfigName    string `form:"configName,optional" db:"config_name"`
+	ConfigKey     string `form:"configKey,optional" db:"config_key"`
+	ConfigType    string `form:"configType,optional" db:"config_type"`
+	DictName      string `form:"dictName,optional" db:"dict_name"`
+	DictType      string `form:"dictType,optional" db:"dict_type"`
+	DictLabel     string `form:"dictLabel,optional" db:"dict_label"`
+	NoticeTitle   string `form:"noticeTitle,optional" db:"notice_title"`
+	NoticeType    string `form:"noticeType,optional" db:"notice_type"`
+	CreateBy      string `form:"createBy,optional" db:"create_by"`
+	JobName       string `form:"jobName,optional" db:"job_name"`
+	JobGroup      string `form:"jobGroup,optional" db:"job_group"`
+	Ipaddr        string `form:"ipaddr,optional" db:"ipaddr"`
+	UserName      string `form:"userName,optional" db:"user_name"`
+	Status        string `form:"status,optional" db:"status"`
+	Title         string `form:"title,optional" db:"title"`
+	OperName      string `form:"operName,optional" db:"oper_name"`
+	OperIp        string `form:"operIp,optional" db:"oper_ip"`
+	BusinessType  string `form:"businessType,optional" db:"business_type"`
+	BeginTime     string `form:"params[beginTime],optional" db:"begin_time"`
+	EndTime       string `form:"params[endTime],optional" db:"end_time"`
+	TableName     string `form:"tableName,optional" db:"table_name"`
+	TableComment  string `form:"tableComment,optional" db:"table_comment"`
+	NickName      string `form:"nickName,optional" db:"nick_name"`
+	Phonenumber   string `form:"phonenumber,optional" db:"phonenumber"`
+	IsRead        string `form:"isRead,optional" db:"is_read"`
+	NoticeId      int64  `form:"noticeId,optional" db:"notice_id"`
+	PageNum       int    `form:"pageNum,optional" db:"page_num"`
+	PageSize      int    `form:"pageSize,optional" db:"page_size"`
+}
+
+type RecordId {
+	Id int64 `path:"id" db:"id"`
+}
+
+type RecordIds {
+	Ids string `path:"ids" db:"ids"`
+}
+
+type LookupKey {
+	Key string `path:"key" db:"key"`
+}
+
+type ListFilter {
+	UserName    string `form:"userName,optional" db:"user_name"`
+	NickName    string `form:"nickName,optional" db:"nick_name"`
+	Phonenumber string `form:"phonenumber,optional" db:"phonenumber"`
+	Status      string `form:"status,optional" db:"status"`
+	BeginTime   string `form:"params[beginTime],optional" db:"begin_time"`
+	EndTime     string `form:"params[endTime],optional" db:"end_time"`
+	DeptName    string `form:"deptName,optional" db:"dept_name"`
+	PostCode    string `form:"postCode,optional" db:"post_code"`
+	PostName    string `form:"postName,optional" db:"post_name"`
+	RoleName    string `form:"roleName,optional" db:"role_name"`
+	RoleKey     string `form:"roleKey,optional" db:"role_key"`
+	MenuName    string `form:"menuName,optional" db:"menu_name"`
+	Visible     string `form:"visible,optional" db:"visible"`
+	DeptId      int64  `form:"deptId,optional" db:"dept_id"`
+	UserId      int64  `form:"userId,optional" db:"user_id"`
+	RoleId      int64  `form:"roleId,optional" db:"role_id"`
+	PageNum     int    `form:"pageNum,optional" db:"page_num"`
+	PageSize    int    `form:"pageSize,optional" db:"page_size"`
+}
+
+type TreeNode {
+	Id       int64      `json:"id,optional" db:"id"`
+	Label    string     `json:"label,optional" db:"label"`
+	Disabled bool       `json:"disabled,optional" db:"disabled"`
+	Children []TreeNode `json:"children,optional" db:"children"`
+}
+
+type SortInput {
+	MenuIds   string `json:"menuIds,optional" db:"menu_ids"`
+	DeptIds   string `json:"deptIds,optional" db:"dept_ids"`
+	OrderNums string `json:"orderNums,optional" db:"order_nums"`
+}
+
+type TreeResult {
+	StatusResponse
+	Data []TreeNode `json:"data"`
+}

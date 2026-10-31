@@ -1,0 +1,90 @@
+syntax = "v1"
+
+type MemberAssignment {
+	RoleId  int64  `form:"roleId,optional" db:"role_id"`
+	UserIds string `form:"userIds,optional" db:"user_ids"`
+}
+
+type MemberRemoval {
+	RoleId int64 `json:"roleId,optional" db:"role_id"`
+	UserId int64 `json:"userId,optional" db:"user_id"`
+}
+
+type RoleRecord {
+	RoleId            int64   `json:"roleId,optional" db:"role_id"`
+	RoleName          string  `json:"roleName,optional" db:"role_name" validate:"omitempty,max=30"`
+	RoleKey           string  `json:"roleKey,optional" db:"role_key" validate:"omitempty,max=100"`
+	RoleSort          int     `json:"roleSort,optional" db:"role_sort"`
+	DataScope         string  `json:"dataScope,optional" db:"data_scope"`
+	Status            string  `json:"status,optional" db:"status"`
+	Remark            string  `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	MenuCheckStrictly bool    `json:"menuCheckStrictly,optional" db:"menu_check_strictly"`
+	DeptCheckStrictly bool    `json:"deptCheckStrictly,optional" db:"dept_check_strictly"`
+	CreateTime        string  `json:"createTime,optional" db:"create_time"`
+	Flag              bool    `json:"flag,optional" db:"flag"`
+	Admin             bool    `json:"admin,optional" db:"admin"`
+	MenuIds           []int64 `json:"menuIds,optional" db:"menu_ids"`
+	DeptIds           []int64 `json:"deptIds,optional" db:"dept_ids"`
+}
+
+type DeptTreeResult {
+	StatusResponse
+	Depts       []TreeNode `json:"depts"`
+	CheckedKeys []int64    `json:"checkedKeys"`
+}
+
+type RoleResult {
+	StatusResponse
+	Data RoleRecord `json:"data"`
+}
+
+type RoleList {
+	StatusResponse
+	Rows  []RoleRecord `json:"rows"`
+	Total int64        `json:"total"`
+}
+
+@server (
+	group: role
+	middleware: Session
+)
+service admin-api {
+	@handler RoleOptions
+	get /system/role/optionselect returns (Result)
+	@handler ExportRoles
+	post /system/role/export (ListFilter)
+}
+
+@server (
+	group: role
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ListRole
+	get /role/list (ListFilter) returns (RoleList)
+	@handler GetRole
+	get /role/:id (RecordId) returns (RoleResult)
+	@handler CreateRole
+	post /role (RoleRecord) returns (StatusResponse)
+	@handler EditRole
+	put /role (RoleRecord) returns (StatusResponse)
+	@handler DeleteRole
+	delete /role/:ids (RecordIds) returns (StatusResponse)
+	@handler RoleDepartments
+	get /role/deptTree/:id (RecordId) returns (DeptTreeResult)
+	@handler RoleScope
+	put /role/dataScope (RoleRecord) returns (StatusResponse)
+	@handler RoleStatus
+	put /role/changeStatus (RoleRecord) returns (StatusResponse)
+	@handler AllocatedUsers
+	get /role/authUser/allocatedList (ListFilter) returns (UserPage)
+	@handler UnallocatedUsers
+	get /role/authUser/unallocatedList (ListFilter) returns (UserPage)
+	@handler RemoveMember
+	put /role/authUser/cancel (MemberRemoval) returns (StatusResponse)
+	@handler RemoveMembers
+	put /role/authUser/cancelAll (MemberAssignment) returns (StatusResponse)
+	@handler AddMembers
+	put /role/authUser/selectAll (MemberAssignment) returns (StatusResponse)
+}

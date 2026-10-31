@@ -1,0 +1,29 @@
+syntax = "v1"
+
+type JobLogEntry {
+	JobLogId      int64  `json:"jobLogId,optional" db:"job_log_id"`
+	JobName       string `json:"jobName,optional" db:"job_name"`
+	JobGroup      string `json:"jobGroup,optional" db:"job_group"`
+	InvokeTarget  string `json:"invokeTarget,optional" db:"invoke_target"`
+	JobMessage    string `json:"jobMessage,optional" db:"job_message"`
+	Status        string `json:"status,optional" db:"status"`
+	ExceptionInfo string `json:"exceptionInfo,optional" db:"exception_info"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+}
+
+@server (
+	group: job_log
+	middleware: Session
+)
+service admin-api {
+	@handler ListJobLog
+	get /monitor/jobLog/list (AdminFilter) returns (PageResult)
+	@handler GetJobLog
+	get /monitor/jobLog/:id (RecordId) returns (Result)
+	@handler DeleteJobLog
+	delete /monitor/jobLog/:ids (RecordIds) returns (StatusResponse)
+	@handler CleanJobLog
+	delete /monitor/jobLog/clean returns (StatusResponse)
+	@handler ExportJobLog
+	post /monitor/jobLog/export (AdminFilter)
+}

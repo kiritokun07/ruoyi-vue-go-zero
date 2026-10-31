@@ -1,0 +1,45 @@
+syntax = "v1"
+
+type ParameterEntry {
+	ConfigId    int64  `json:"configId,optional" db:"config_id"`
+	ConfigName  string `json:"configName,optional" db:"config_name"`
+	ConfigKey   string `json:"configKey,optional" db:"config_key"`
+	ConfigValue string `json:"configValue,optional" db:"config_value"`
+	ConfigType  string `json:"configType,optional" db:"config_type"`
+	CreateBy    string `json:"createBy,optional" db:"create_by"`
+	CreateTime  string `json:"createTime,optional" db:"create_time"`
+	UpdateBy    string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime  string `json:"updateTime,optional" db:"update_time"`
+	Remark      string `json:"remark,optional" db:"remark"`
+}
+
+@server (
+	group: config
+	middleware: Session
+)
+service admin-api {
+	@handler ListParameter
+	get /system/config/list (AdminFilter) returns (PageResult)
+	@handler GetParameter
+	get /system/config/:id (RecordId) returns (Result)
+	@handler CreateParameter
+	post /system/config (ParameterEntry) returns (StatusResponse)
+	@handler EditParameter
+	put /system/config (ParameterEntry) returns (StatusResponse)
+	@handler DeleteParameter
+	delete /system/config/:ids (RecordIds) returns (StatusResponse)
+	@handler ExportParameter
+	post /system/config/export (AdminFilter)
+	@handler RefreshConfig
+	delete /system/config/refreshCache returns (StatusResponse)
+}
+
+@server (
+	group: config
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ConfigValue
+	get /config/configKey/:key (LookupKey) returns (StatusResponse)
+}

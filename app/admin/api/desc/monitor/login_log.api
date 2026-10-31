@@ -1,0 +1,30 @@
+syntax = "v1"
+
+type LoginEventEntry {
+	InfoId        int64  `json:"infoId,optional" db:"info_id"`
+	UserName      string `json:"userName,optional" db:"user_name"`
+	Ipaddr        string `json:"ipaddr,optional" db:"ipaddr"`
+	LoginLocation string `json:"loginLocation,optional" db:"login_location"`
+	Browser       string `json:"browser,optional" db:"browser"`
+	Os            string `json:"os,optional" db:"os"`
+	Status        string `json:"status,optional" db:"status"`
+	Msg           string `json:"msg,optional" db:"msg"`
+	LoginTime     string `json:"loginTime,optional" db:"login_time"`
+}
+
+@server (
+	group: login_log
+	middleware: Session
+)
+service admin-api {
+	@handler ListLoginEvent
+	get /monitor/logininfor/list (AdminFilter) returns (PageResult)
+	@handler DeleteLoginEvent
+	delete /monitor/logininfor/:ids (RecordIds) returns (StatusResponse)
+	@handler CleanLoginEvent
+	delete /monitor/logininfor/clean returns (StatusResponse)
+	@handler ExportLoginEvent
+	post /monitor/logininfor/export (AdminFilter)
+	@handler UnlockLogin
+	get /monitor/logininfor/unlock/:key (LookupKey) returns (StatusResponse)
+}

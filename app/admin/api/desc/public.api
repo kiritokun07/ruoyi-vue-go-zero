@@ -1,0 +1,9 @@
+syntax = "v1"
+
+@server (
+	group: public
+)
+service admin-api {
+	@handler Welcome
+	get /
+}

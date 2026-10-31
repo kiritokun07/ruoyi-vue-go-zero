@@ -87,3 +87,11 @@ temp/
 /.local/
 
 # 保留 .codex/config.toml、AGENTS.md、.gitmodules 和 AI 子模块。
+
+# Local avatar uploads
+/var/avatars/
+
+# Runtime files from the management APIs
+/var/uploads/
+/var/downloads/
+/var/generated/

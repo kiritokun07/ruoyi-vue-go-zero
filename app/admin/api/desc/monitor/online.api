@@ -1,0 +1,12 @@
+syntax = "v1"
+
+@server (
+	group: online
+	middleware: Session
+)
+service admin-api {
+	@handler OnlineUsers
+	get /monitor/online/list (AdminFilter) returns (PageResult)
+	@handler ForceLogout
+	delete /monitor/online/:key (LookupKey) returns (StatusResponse)
+}

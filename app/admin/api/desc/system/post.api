@@ -1,0 +1,51 @@
+syntax = "v1"
+
+type PostRecord {
+	PostId     int64  `json:"postId,optional" db:"post_id"`
+	PostCode   string `json:"postCode,optional" db:"post_code" validate:"omitempty,max=64"`
+	PostName   string `json:"postName,optional" db:"post_name" validate:"omitempty,max=50"`
+	PostSort   int    `json:"postSort,optional" db:"post_sort"`
+	Status     string `json:"status,optional" db:"status"`
+	Remark     string `json:"remark,optional" db:"remark" validate:"omitempty,max=500"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type PostResult {
+	StatusResponse
+	Data PostRecord `json:"data"`
+}
+
+type PostList {
+	StatusResponse
+	Rows  []PostRecord `json:"rows"`
+	Total int64        `json:"total"`
+}
+
+@server (
+	group: post
+	middleware: Session
+)
+service admin-api {
+	@handler PostOptions
+	get /system/post/optionselect returns (Result)
+	@handler ExportPosts
+	post /system/post/export (ListFilter)
+}
+
+@server (
+	group: post
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ListPost
+	get /post/list (ListFilter) returns (PostList)
+	@handler GetPost
+	get /post/:id (RecordId) returns (PostResult)
+	@handler CreatePost
+	post /post (PostRecord) returns (StatusResponse)
+	@handler EditPost
+	put /post (PostRecord) returns (StatusResponse)
+	@handler DeletePost
+	delete /post/:ids (RecordIds) returns (StatusResponse)
+}

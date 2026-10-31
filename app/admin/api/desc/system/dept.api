@@ -1,0 +1,46 @@
+syntax = "v1"
+
+type DeptRecord {
+	DeptId     int64  `json:"deptId,optional" db:"dept_id"`
+	ParentId   int64  `json:"parentId,optional" db:"parent_id"`
+	DeptName   string `json:"deptName,optional" db:"dept_name" validate:"omitempty,max=30"`
+	OrderNum   int    `json:"orderNum,optional" db:"order_num"`
+	Ancestors  string `json:"ancestors,optional" db:"ancestors"`
+	Leader     string `json:"leader,optional" db:"leader" validate:"omitempty,max=20"`
+	Phone      string `json:"phone,optional" db:"phone" validate:"omitempty,max=11"`
+	Email      string `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Status     string `json:"status,optional" db:"status"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type DeptResult {
+	StatusResponse
+	Data DeptRecord `json:"data"`
+}
+
+type DeptList {
+	StatusResponse
+	Data []DeptRecord `json:"data"`
+}
+
+@server (
+	group: dept
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ListDept
+	get /dept/list (ListFilter) returns (DeptList)
+	@handler GetDept
+	get /dept/:id (RecordId) returns (DeptResult)
+	@handler CreateDept
+	post /dept (DeptRecord) returns (StatusResponse)
+	@handler EditDept
+	put /dept (DeptRecord) returns (StatusResponse)
+	@handler DeleteDept
+	delete /dept/:ids (RecordIds) returns (StatusResponse)
+	@handler ExcludeDepartment
+	get /dept/list/exclude/:id (RecordId) returns (DeptList)
+	@handler SortDepartments
+	put /dept/updateSort (SortInput) returns (StatusResponse)
+}

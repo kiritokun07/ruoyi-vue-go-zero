@@ -1,0 +1,50 @@
+syntax = "v1"
+
+type ProfileInput {
+	NickName    string `json:"nickName,optional" db:"nick_name" validate:"omitempty,max=30"`
+	Email       string `json:"email,optional" db:"email" validate:"omitempty,max=50"`
+	Phonenumber string `json:"phonenumber,optional" db:"phonenumber" validate:"omitempty,max=11"`
+	Sex         string `json:"sex,optional" db:"sex"`
+}
+
+type PasswordInput {
+	OldPassword string `json:"oldPassword,optional" db:"old_password"`
+	NewPassword string `json:"newPassword,optional" db:"new_password"`
+}
+
+type ProfileResult {
+	StatusResponse
+	Data      UserProfile `json:"data"`
+	RoleGroup string      `json:"roleGroup"`
+	PostGroup string      `json:"postGroup"`
+}
+
+type AvatarResult {
+	StatusResponse
+	ImgUrl string `json:"imgUrl"`
+}
+
+@server (
+	group: profile
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler Profile
+	get /user/profile returns (ProfileResult)
+	@handler SaveProfile
+	put /user/profile (ProfileInput) returns (StatusResponse)
+	@handler ChangePassword
+	put /user/profile/updatePwd (PasswordInput) returns (StatusResponse)
+}
+
+@server (
+	group: profile
+	maxBytes: 6291456
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler UploadAvatar
+	post /user/profile/avatar returns (AvatarResult)
+}

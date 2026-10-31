@@ -1,0 +1,76 @@
+syntax = "v1"
+
+type BulletinEntry {
+	NoticeId      int64  `json:"noticeId,optional" db:"notice_id"`
+	NoticeTitle   string `json:"noticeTitle,optional" db:"notice_title"`
+	NoticeType    string `json:"noticeType,optional" db:"notice_type"`
+	NoticeContent string `json:"noticeContent,optional" db:"notice_content"`
+	Status        string `json:"status,optional" db:"status"`
+	CreateBy      string `json:"createBy,optional" db:"create_by"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+	UpdateBy      string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime    string `json:"updateTime,optional" db:"update_time"`
+	Remark        string `json:"remark,optional" db:"remark"`
+}
+
+type Notice {
+	NoticeId      int64  `json:"noticeId" db:"notice_id"`
+	NoticeTitle   string `json:"noticeTitle" db:"notice_title"`
+	NoticeType    string `json:"noticeType" db:"notice_type"`
+	NoticeContent string `json:"noticeContent,omitempty" db:"notice_content"`
+	CreateBy      string `json:"createBy" db:"create_by"`
+	CreateTime    string `json:"createTime" db:"create_time"`
+	IsRead        bool   `json:"isRead" db:"is_read"`
+}
+
+type NoticeList {
+	StatusResponse
+	Data        []Notice `json:"data"`
+	UnreadCount int      `json:"unreadCount"`
+}
+
+type NoticeDetail {
+	StatusResponse
+	Data Notice `json:"data"`
+}
+
+type ReadNoticeRequest {
+	NoticeId int64 `form:"noticeId"`
+}
+
+type ReadNoticesRequest {
+	Ids string `form:"ids"`
+}
+
+@server (
+	group: notice
+	middleware: Session
+)
+service admin-api {
+	@handler ListBulletin
+	get /system/notice/list (AdminFilter) returns (PageResult)
+	@handler CreateBulletin
+	post /system/notice (BulletinEntry) returns (StatusResponse)
+	@handler EditBulletin
+	put /system/notice (BulletinEntry) returns (StatusResponse)
+	@handler DeleteBulletin
+	delete /system/notice/:ids (RecordIds) returns (StatusResponse)
+	@handler ReadUsers
+	get /system/notice/readUsers/list (AdminFilter) returns (PageResult)
+}
+
+@server (
+	group: notice
+	middleware: Session
+	prefix: /system/notice
+)
+service admin-api {
+	@handler HeaderNotices
+	get /listTop returns (NoticeList)
+	@handler NoticeDetail
+	get /:id (RecordId) returns (NoticeDetail)
+	@handler MarkNoticeRead
+	post /markRead (ReadNoticeRequest) returns (StatusResponse)
+	@handler MarkNoticesRead
+	post /markReadAll (ReadNoticesRequest) returns (StatusResponse)
+}

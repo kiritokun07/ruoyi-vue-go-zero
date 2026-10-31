@@ -1,0 +1,97 @@
+syntax = "v1"
+
+type TablesForm {
+	Tables string `form:"tables,optional" db:"tables"`
+}
+
+type DDLForm {
+	Sql string `form:"sql,optional" db:"sql"`
+}
+
+type GenColumn {
+	ColumnId      int64  `json:"columnId,optional" db:"column_id"`
+	TableId       int64  `json:"tableId,optional" db:"table_id"`
+	ColumnName    string `json:"columnName,optional" db:"column_name"`
+	ColumnComment string `json:"columnComment,optional" db:"column_comment"`
+	ColumnType    string `json:"columnType,optional" db:"column_type"`
+	JavaType      string `json:"javaType,optional" db:"java_type"`
+	JavaField     string `json:"javaField,optional" db:"java_field"`
+	IsPk          string `json:"isPk,optional" db:"is_pk"`
+	IsIncrement   string `json:"isIncrement,optional" db:"is_increment"`
+	IsRequired    string `json:"isRequired,optional" db:"is_required"`
+	IsInsert      string `json:"isInsert,optional" db:"is_insert"`
+	IsEdit        string `json:"isEdit,optional" db:"is_edit"`
+	IsList        string `json:"isList,optional" db:"is_list"`
+	IsQuery       string `json:"isQuery,optional" db:"is_query"`
+	QueryType     string `json:"queryType,optional" db:"query_type"`
+	HtmlType      string `json:"htmlType,optional" db:"html_type"`
+	DictType      string `json:"dictType,optional" db:"dict_type"`
+	Sort          int64  `json:"sort,optional" db:"sort"`
+	CreateBy      string `json:"createBy,optional" db:"create_by"`
+	CreateTime    string `json:"createTime,optional" db:"create_time"`
+	UpdateBy      string `json:"updateBy,optional" db:"update_by"`
+	UpdateTime    string `json:"updateTime,optional" db:"update_time"`
+}
+
+type GenTable {
+	TableId        int64                  `json:"tableId,optional" db:"table_id"`
+	TableName      string                 `json:"tableName,optional" db:"table_name"`
+	TableComment   string                 `json:"tableComment,optional" db:"table_comment"`
+	SubTableName   string                 `json:"subTableName,optional" db:"sub_table_name"`
+	SubTableFkName string                 `json:"subTableFkName,optional" db:"sub_table_fk_name"`
+	ClassName      string                 `json:"className,optional" db:"class_name"`
+	TplCategory    string                 `json:"tplCategory,optional" db:"tpl_category"`
+	TplWebType     string                 `json:"tplWebType,optional" db:"tpl_web_type"`
+	PackageName    string                 `json:"packageName,optional" db:"package_name"`
+	ModuleName     string                 `json:"moduleName,optional" db:"module_name"`
+	BusinessName   string                 `json:"businessName,optional" db:"business_name"`
+	FunctionName   string                 `json:"functionName,optional" db:"function_name"`
+	FunctionAuthor string                 `json:"functionAuthor,optional" db:"function_author"`
+	GenType        string                 `json:"genType,optional" db:"gen_type"`
+	GenPath        string                 `json:"genPath,optional" db:"gen_path"`
+	Options        string                 `json:"options,optional" db:"options"`
+	CreateBy       string                 `json:"createBy,optional" db:"create_by"`
+	CreateTime     string                 `json:"createTime,optional" db:"create_time"`
+	UpdateBy       string                 `json:"updateBy,optional" db:"update_by"`
+	UpdateTime     string                 `json:"updateTime,optional" db:"update_time"`
+	Remark         string                 `json:"remark,optional" db:"remark"`
+	Columns        []GenColumn            `json:"columns,optional" db:"columns"`
+	Params         map[string]interface{} `json:"params,optional" db:"params"`
+	TreeCode       string                 `json:"treeCode,optional" db:"tree_code"`
+	TreeName       string                 `json:"treeName,optional" db:"tree_name"`
+	TreeParentCode string                 `json:"treeParentCode,optional" db:"tree_parent_code"`
+	ParentMenuId   interface{}            `json:"parentMenuId,optional" db:"parent_menu_id"`
+}
+
+@server (
+	group: gen
+	middleware: Session
+)
+service admin-api {
+	@handler GenList
+	get /tool/gen/list (AdminFilter) returns (PageResult)
+	@handler GenDatabase
+	get /tool/gen/db/list (AdminFilter) returns (PageResult)
+	@handler GenInfo
+	get /tool/gen/:id (RecordId) returns (Result)
+	@handler GenColumns
+	get /tool/gen/column/:id (RecordId) returns (PageResult)
+	@handler GenImport
+	post /tool/gen/importTable (TablesForm) returns (StatusResponse)
+	@handler GenCreate
+	post /tool/gen/createTable (DDLForm) returns (StatusResponse)
+	@handler GenEdit
+	put /tool/gen (GenTable) returns (StatusResponse)
+	@handler GenDelete
+	delete /tool/gen/:ids (RecordIds) returns (StatusResponse)
+	@handler GenPreview
+	get /tool/gen/preview/:id (RecordId) returns (Result)
+	@handler GenDownload
+	get /tool/gen/download/:key (LookupKey)
+	@handler GenGenerate
+	get /tool/gen/genCode/:key (LookupKey) returns (StatusResponse)
+	@handler GenSync
+	get /tool/gen/synchDb/:key (LookupKey) returns (StatusResponse)
+	@handler GenBatch
+	get /tool/gen/batchGenCode (TablesForm)
+}

@@ -1,0 +1,25 @@
+syntax = "v1"
+
+type DemoUser {
+	UserId   int64  `json:"userId,optional" form:"userId,optional" db:"user_id"`
+	Username string `json:"username,optional" form:"username,optional" db:"username"`
+	Password string `json:"password,optional" form:"password,optional" db:"password"`
+	Mobile   string `json:"mobile,optional" form:"mobile,optional" db:"mobile"`
+}
+
+@server (
+	group: demo
+	middleware: Session
+)
+service admin-api {
+	@handler DemoList
+	get /test/user/list returns (Result)
+	@handler DemoGet
+	get /test/user/:id (RecordId) returns (Result)
+	@handler DemoSave
+	post /test/user/save (DemoUser) returns (Result)
+	@handler DemoEdit
+	put /test/user/update (DemoUser) returns (Result)
+	@handler DemoRemove
+	delete /test/user/:id (RecordId) returns (Result)
+}

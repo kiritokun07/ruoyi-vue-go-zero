@@ -1,0 +1,10 @@
+syntax = "v1"
+
+@server (
+	group: serverinfo
+	middleware: Session
+)
+service admin-api {
+	@handler ServerInfo
+	get /monitor/server returns (Result)
+}

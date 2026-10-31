@@ -1,0 +1,60 @@
+syntax = "v1"
+
+type MenuRecord {
+	MenuId     int64  `json:"menuId,optional" db:"menu_id"`
+	ParentId   int64  `json:"parentId,optional" db:"parent_id"`
+	MenuName   string `json:"menuName,optional" db:"menu_name" validate:"omitempty,max=50"`
+	OrderNum   int    `json:"orderNum,optional" db:"order_num"`
+	Path       string `json:"path,optional" db:"path" validate:"omitempty,max=200"`
+	Component  string `json:"component,optional" db:"component" validate:"omitempty,max=255"`
+	Query      string `json:"query,optional" db:"route_query" validate:"omitempty,max=255"`
+	RouteName  string `json:"routeName,optional" db:"route_name" validate:"omitempty,max=50"`
+	IsFrame    string `json:"isFrame,optional" db:"is_frame"`
+	IsCache    string `json:"isCache,optional" db:"is_cache"`
+	MenuType   string `json:"menuType,optional" db:"menu_type"`
+	Visible    string `json:"visible,optional" db:"visible"`
+	Status     string `json:"status,optional" db:"status"`
+	Perms      string `json:"perms,optional" db:"perms" validate:"omitempty,max=100"`
+	Icon       string `json:"icon,optional" db:"icon" validate:"omitempty,max=100"`
+	CreateTime string `json:"createTime,optional" db:"create_time"`
+}
+
+type MenuTreeResult {
+	StatusResponse
+	Menus       []TreeNode `json:"menus"`
+	CheckedKeys []int64    `json:"checkedKeys"`
+}
+
+type MenuResult {
+	StatusResponse
+	Data MenuRecord `json:"data"`
+}
+
+type MenuList {
+	StatusResponse
+	Data []MenuRecord `json:"data"`
+}
+
+@server (
+	group: menu
+	middleware: Session
+	prefix: /system
+)
+service admin-api {
+	@handler ListMenu
+	get /menu/list (ListFilter) returns (MenuList)
+	@handler GetMenu
+	get /menu/:id (RecordId) returns (MenuResult)
+	@handler CreateMenu
+	post /menu (MenuRecord) returns (StatusResponse)
+	@handler EditMenu
+	put /menu (MenuRecord) returns (StatusResponse)
+	@handler DeleteMenu
+	delete /menu/:ids (RecordIds) returns (StatusResponse)
+	@handler MenuTree
+	get /menu/treeselect returns (TreeResult)
+	@handler RoleMenuTree
+	get /menu/roleMenuTreeselect/:id (RecordId) returns (MenuTreeResult)
+	@handler SortMenus
+	put /menu/updateSort (SortInput) returns (StatusResponse)
+}
